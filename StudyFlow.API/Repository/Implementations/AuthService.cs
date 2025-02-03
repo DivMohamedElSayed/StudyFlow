@@ -2,11 +2,41 @@
 
 public class AuthService(
         UserManager<ApplicationUser> userManager,
-        ILogger<AuthService> logger
+        ILogger<AuthService> logger,
+        SignInManager<ApplicationUser> signInManager,
+        IJwtProvider jwtProvider
     ) : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<AuthService> _logger = logger;
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
+    private readonly IJwtProvider _jwtProvider = jwtProvider;
+
+    public async Task<Result<SignInResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Attempting to sign in with email: {Email}", request.Email);
+        if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
+            return Result.Failure<SignInResponse>(UserErrors.InvalidCredentials);
+        if (user.IsDisabled)
+            return Result.Failure<SignInResponse>(UserErrors.UserIsDisabled);
+        _logger.LogInformation("User account is active. Attempting password sign-in for email: {Email}", request.Email);
+        var result = await _signInManager.PasswordSignInAsync(user, request.Password, false, true);
+        if (result.Succeeded)
+        {
+            _logger.LogInformation("Sign-in succeeded for user: {Email}", request.Email);
+            var (token, expireIn) = _jwtProvider.GenerateToken(user);
+            await _userManager.UpdateAsync(user);
+            var response = new SignInResponse(user.Id, user.FirstName, user.LastName, user.Email, user.UserName, token, expireIn);
+            return Result.Success(response);
+        }
+        var error = result.IsNotAllowed
+            ? UserErrors.EmailNotConfirmed
+            : result.IsLockedOut
+            ? UserErrors.LockedOut
+            : UserErrors.InvalidCredentials;
+
+        return Result.Failure<SignInResponse>(error);
+    }
 
     public async Task<Result> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)
     {

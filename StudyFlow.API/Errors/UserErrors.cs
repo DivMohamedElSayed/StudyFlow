@@ -7,4 +7,16 @@ public static class UserErrors
 
     public static readonly Error DuplicatedUserName =
         new("user.duplicate_username", "This username is already taken. Please choose a different username.", StatusCodes.Status409Conflict);
+
+    public static readonly Error InvalidCredentials =
+    new("user.invalid_credentials", "Invalid username or password. Please try again.", StatusCodes.Status401Unauthorized);
+
+    public static readonly Error UserIsDisabled =
+    new("user.user_disabled", "This account has been disabled. Please contact support.", StatusCodes.Status403Forbidden);
+
+    public static readonly Error EmailNotConfirmed =
+    new("auth.email_not_confirmed", "Your email address is not confirmed. Please check your inbox and confirm your email.", StatusCodes.Status400BadRequest);
+
+    public static readonly Error LockedOut =
+    new("auth.account_locked", "Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.", StatusCodes.Status423Locked);
 }

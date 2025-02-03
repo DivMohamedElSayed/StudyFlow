@@ -78,6 +78,7 @@ public static class DepandencyInjection
     private static IServiceCollection AddRegistrationServicesConfig(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddSingleton<IJwtProvider, JwtProvider>();
         return services;
     }
 }
