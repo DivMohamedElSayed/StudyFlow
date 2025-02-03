@@ -7,8 +7,9 @@ public static class DepandencyInjection
         // Add services to the container.
         services.AddControllers();
         // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+        services.AddOpenApi(options => options.AddDocumentTransformer<BearerSecuritySchemeTransformer>());
         services.AddConnectionConfig(configuration)
-            .AddOpenApi()
+            .AddEndpointsApiExplorer()
             .AddIdentityConfig()
             .AddValidationConfig()
             .AddMapsterConfig()
@@ -32,6 +33,15 @@ public static class DepandencyInjection
         services.AddIdentity<ApplicationUser, IdentityRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
+        services.Configure<IdentityOptions>(option =>
+        {
+            option.Password.RequiredLength = 8;
+            //option.SignIn.RequireConfirmedEmail = true;
+            option.SignIn.RequireConfirmedPhoneNumber = false;
+            option.User.RequireUniqueEmail = true;
+            option.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Lockout duration
+            option.Lockout.MaxFailedAccessAttempts = 5; // Max Failed
+        });
         return services;
     }
 

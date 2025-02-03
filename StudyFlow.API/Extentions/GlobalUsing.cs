@@ -26,3 +26,8 @@ global using StudyFlow.API.Abstractions;
 global using StudyFlow.API.Errors;
 global using Microsoft.Extensions.Options;
 global using System.IdentityModel.Tokens.Jwt;
+global using Microsoft.OpenApi.Models;
+global using Microsoft.AspNetCore.Authentication;
+global using Microsoft.AspNetCore.OpenApi;
+global using StudyFlow.API.OpenApiTransformer;
+global using Scalar.AspNetCore;
