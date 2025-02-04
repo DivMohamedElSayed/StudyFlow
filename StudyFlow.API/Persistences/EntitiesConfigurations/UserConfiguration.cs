@@ -8,5 +8,9 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
             .HasMaxLength(100);
         builder.Property(l => l.LastName)
             .HasMaxLength(100);
+        builder.Property(t => t.ThemePreference)
+            .HasMaxLength(10)
+            .HasDefaultValue(ThemeConstants.Default)
+            .HasComment("User's theme preference (dark/light/default)");
     }
 }

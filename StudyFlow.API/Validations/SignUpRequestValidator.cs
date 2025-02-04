@@ -4,18 +4,6 @@ public class SignUpRequestValidator : AbstractValidator<SignUpRequest>
 {
     public SignUpRequestValidator()
     {
-        RuleFor(f => f.FirstName)
-            .NotEmpty()
-            .WithMessage("First Name is required.")
-            .Length(3, 100)
-            .WithMessage("First Name must be between 3 and 100 characters.");
-
-        RuleFor(l => l.LastName)
-            .NotEmpty()
-            .WithMessage("Last Name is required.")
-            .Length(3, 100)
-            .WithMessage("Last Name must be between 3 and 100 characters.");
-
         RuleFor(e => e.Email)
             .NotEmpty()
             .WithMessage("Email is required.")
@@ -31,7 +19,9 @@ public class SignUpRequestValidator : AbstractValidator<SignUpRequest>
         RuleFor(u => u.UserName)
             .NotEmpty()
             .WithMessage("Username is required.")
+            .Length(3, 20)
+            .WithMessage("Username must be 3-20 characters long.")
             .Matches(RegexPattern.UserName)
-            .WithMessage("Username must be 3-20 characters long and can only contain letters, numbers, and underscores.");
+            .WithMessage("Username can only contain lowercase letters, numbers, and underscores.");
     }
 }

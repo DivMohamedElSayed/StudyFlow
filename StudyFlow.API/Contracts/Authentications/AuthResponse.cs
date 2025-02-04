@@ -1,6 +1,6 @@
 ﻿namespace StudyFlow.API.Contracts.Authentications;
 
-public record SignInResponse(
+public record AuthResponse(
     string Id,
     string FirstName,
     string LastName,

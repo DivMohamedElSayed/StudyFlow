@@ -12,30 +12,36 @@ public class AuthService(
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IJwtProvider _jwtProvider = jwtProvider;
 
-    public async Task<Result<SignInResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Attempting to sign in with email: {Email}", request.Email);
-        if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
-            return Result.Failure<SignInResponse>(UserErrors.InvalidCredentials);
+        _logger.LogInformation("Attempting to sign in with username: {Username}", request.UserName);
+
+        // Find the user by username instead of email
+        if (await _userManager.FindByNameAsync(request.UserName) is not { } user)
+            return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
+
         if (user.IsDisabled)
-            return Result.Failure<SignInResponse>(UserErrors.UserIsDisabled);
-        _logger.LogInformation("User account is active. Attempting password sign-in for email: {Email}", request.Email);
+            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+
+        _logger.LogInformation("User account is active. Attempting password sign-in for username: {Username}", request.UserName);
+
         var result = await _signInManager.PasswordSignInAsync(user, request.Password, false, true);
         if (result.Succeeded)
         {
-            _logger.LogInformation("Sign-in succeeded for user: {Email}", request.Email);
+            _logger.LogInformation("Sign-in succeeded for user: {Username}", request.UserName);
             var (token, expireIn) = _jwtProvider.GenerateToken(user);
             await _userManager.UpdateAsync(user);
-            var response = new SignInResponse(user.Id, user.FirstName, user.LastName, user.Email, user.UserName, token, expireIn);
+            var response = new AuthResponse(user.Id, user.FirstName!, user.LastName!, user.Email, user.UserName, token, expireIn);
             return Result.Success(response);
         }
+
         var error = result.IsNotAllowed
             ? UserErrors.EmailNotConfirmed
             : result.IsLockedOut
             ? UserErrors.LockedOut
             : UserErrors.InvalidCredentials;
 
-        return Result.Failure<SignInResponse>(error);
+        return Result.Failure<AuthResponse>(error);
     }
 
     public async Task<Result> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)

@@ -4,11 +4,6 @@ public class SignInRequestValidator : AbstractValidator<SignInRequest>
 {
     public SignInRequestValidator()
     {
-        RuleFor(e => e.Email)
-           .NotEmpty()
-           .WithMessage("Email is required.")
-           .EmailAddress()
-           .WithMessage("Invalid email format.");
         RuleFor(u => u.UserName)
            .NotEmpty()
            .WithMessage("Username is required.")

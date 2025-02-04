@@ -19,4 +19,7 @@ public static class UserErrors
 
     public static readonly Error LockedOut =
     new("auth.account_locked", "Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.", StatusCodes.Status423Locked);
+
+    public static readonly Error UserNotFound =
+    new("user.not_found", "The user was not found. Please check the provided information and try again.", StatusCodes.Status404NotFound);
 }

@@ -18,7 +18,7 @@ public class authController(IAuthService authService, ILogger<authController> lo
     [HttpPost("sign-in")]
     public async Task<IActionResult> SignIn([FromBody] SignInRequest request, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("SignIn: Received sign-in request for email: {Email}, username: {Username}", request.Email, request.UserName);
+        _logger.LogInformation("SignIn: Received sign-in request for userName: {UserName}", request.UserName);
         var result = await _authService.SignInAsync(request, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
