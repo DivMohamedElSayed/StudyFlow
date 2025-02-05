@@ -12,5 +12,21 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
             .HasMaxLength(10)
             .HasDefaultValue(ThemeConstants.Default)
             .HasComment("User's theme preference (dark/light/default)");
+        builder.HasData(new ApplicationUser
+        {
+            Id = DefaultUser.AdminId,
+            FirstName = DefaultUser.AdminFirstName,
+            LastName = DefaultUser.AdminLastName,
+            Email = DefaultUser.AdminEmail,
+            NormalizedEmail= DefaultUser.AdminEmail.ToUpper(),
+            UserName = DefaultUser.AdminUserName,
+            NormalizedUserName = DefaultUser.AdminUserName.ToUpper(),
+            IsDisabled =false,
+            EmailConfirmed =true,
+            ConcurrencyStamp = DefaultUser.AdminConcurrencyStamp,
+            SecurityStamp = DefaultUser.AdminSecurityStamp,
+            PasswordHash = DefaultUser.AdminPassword,
+            ThemePreference =ThemeConstants.Default
+        });
     }
 }

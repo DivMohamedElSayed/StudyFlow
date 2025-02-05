@@ -31,7 +31,7 @@ public static class DepandencyInjection
 
     private static IServiceCollection AddIdentityConfig(this IServiceCollection services)
     {
-        services.AddIdentity<ApplicationUser, IdentityRole>()
+        services.AddIdentity<ApplicationUser, ApplicationRole>()
             .AddEntityFrameworkStores<ApplicationDbContext>()
             .AddDefaultTokenProviders();
         services.Configure<IdentityOptions>(option =>
@@ -85,7 +85,6 @@ public static class DepandencyInjection
         services.AddSingleton<IMapper>(new Mapper(mapConfig));
         return services;
     }
-
     private static IServiceCollection AddRegistrationServicesConfig(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();

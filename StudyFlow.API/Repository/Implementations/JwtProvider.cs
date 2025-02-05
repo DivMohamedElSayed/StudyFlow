@@ -12,7 +12,8 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
             new(JwtRegisteredClaimNames.FamilyName,user.LastName!),
             new(JwtRegisteredClaimNames.Email,user.Email!),
             new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-            new("ThemePreference",user.ThemePreference!)
+            new("ThemePreference",user.ThemePreference!),
+            //new(nameof(role))
         ];
         var encodingOptions = Encoding.UTF8.GetBytes(_options.AccessToken);
         var symmetricSecurityKey = new SymmetricSecurityKey(encodingOptions);

@@ -5,10 +5,15 @@ public class SignInRequestValidator : AbstractValidator<SignInRequest>
     public SignInRequestValidator()
     {
         RuleFor(u => u.UserName)
-           .NotEmpty()
-           .WithMessage("Username is required.")
-           .Matches(RegexPattern.UserName)
-           .WithMessage("Username must be 3-20 characters long and can only contain letters, numbers, and underscores.");
+            .NotEmpty()
+            .WithMessage("Username is required.")
+            .Length(3, 20)
+            .WithMessage("Username must be 3-20 characters long.")
+            .Matches(RegexPattern.UserName)
+            .WithMessage("Username can only contain lowercase letters, numbers, and underscores.")
+            .Must(username => !username.Contains("#"))
+            .WithMessage("Username cannot contain the '#' character.");
+
         RuleFor(p => p.Password)
            .NotEmpty()
            .WithMessage("Password is required.")
