@@ -21,6 +21,8 @@ app.UseHttpsRedirection();
 
 app.UseCors();
 
+app.UseMiddleware<RejectExtraFieldsMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();

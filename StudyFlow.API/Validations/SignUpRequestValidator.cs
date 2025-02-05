@@ -25,7 +25,6 @@
             .WithMessage("Username can only contain lowercase letters, numbers, and underscores.")
             .Must(username => !username.Contains("#"))
             .WithMessage("Username cannot contain the '#' character.");
-
         }
     }
 }

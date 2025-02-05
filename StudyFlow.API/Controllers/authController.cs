@@ -11,7 +11,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         _logger.LogInformation("SignUp: Received sign-up request for email: {Email}, username: {Username}", request.Email, request.UserName);
         var result = await _authService.SignUpAsync(request, cancellationToken);
-        return result.IsSuccess ? Ok() : result.ToProblem();
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
 
     [HttpPost("sign-in")]

@@ -44,7 +44,7 @@ public class AuthService(
         return Result.Failure<AuthResponse>(error);
     }
 
-    public async Task<Result> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponse>> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting user signup process for Email: {Email}, Username: {Username}", request.Email, request.UserName);
         // Check if email already exists
@@ -52,7 +52,7 @@ public class AuthService(
         if (emailExists)
         {
             _logger.LogWarning("Signup failed: Email '{Email}' is already registered.", request.Email);
-            return Result.Failure(UserErrors.DuplicatedEmail);
+            return Result.Failure<AuthResponse>(UserErrors.DuplicatedEmail);
         }
 
         // Check if username already exists
@@ -60,7 +60,7 @@ public class AuthService(
         if (userNameExists)
         {
             _logger.LogWarning("Signup failed: Username '{Username}' is already taken.", request.UserName);
-            return Result.Failure(UserErrors.DuplicatedUserName);
+            return Result.Failure<AuthResponse>(UserErrors.DuplicatedUserName);
         }
         // Map request to ApplicationUser
         var user = request.Adapt<ApplicationUser>();
@@ -73,7 +73,9 @@ public class AuthService(
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             _logger.LogInformation("User '{Username}' created successfully. Token: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
-            return Result.Success();
+            var (token, expireIn) = _jwtProvider.GenerateToken(user);
+            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn);
+            return Result.Success(response);
         }
 
         // Log the first error returned from identity
@@ -81,6 +83,6 @@ public class AuthService(
         _logger.LogError("Signup failed for Email: {Email}, Username: {Username}. Error: {ErrorCode} - {ErrorDescription}",
             request.Email, request.UserName, error.Code, error.Description);
 
-        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+        return Result.Failure<AuthResponse>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
 }

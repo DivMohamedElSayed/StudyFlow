@@ -1,6 +1,6 @@
 ﻿namespace StudyFlow.API.Controllers;
 
-[Route("account")]
+[Route("account/me")]
 [ApiController]
 [Authorize]
 public class AccountController(IUserService userService) : ControllerBase

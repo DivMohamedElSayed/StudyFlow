@@ -12,6 +12,7 @@ public static class DepandencyInjection
             .AddEndpointsApiExplorer()
             .AddIdentityConfig()
             .AddCorsConfig()
+            .AddFilterConfig()
             .AddValidationConfig()
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
@@ -103,4 +104,15 @@ public static class DepandencyInjection
                 option.AllowAnyOrigin();
             });
         });
+    private static IServiceCollection AddFilterConfig(this IServiceCollection services)
+    {
+        services
+        .Configure<JsonOptions>(options =>
+        {
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // Keep case-insensitive deserialization
+            options.JsonSerializerOptions.AllowTrailingCommas = false; // Prevents extra commas
+            options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Disallow; // Disallow comments
+        });
+        return services;
+    }
 }

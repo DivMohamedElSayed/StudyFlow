@@ -33,3 +33,5 @@ global using StudyFlow.API.OpenApiTransformer;
 global using StudyFlow.API.Contracts.Users;
 global using Scalar.AspNetCore;
 global using Microsoft.AspNetCore.Authorization;
+global using System.Text.Json;
+global using StudyFlow.API.Contracts.Authentications.Filters;
