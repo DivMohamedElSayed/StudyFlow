@@ -31,7 +31,7 @@ public class AuthService(
             _logger.LogInformation("Sign-in succeeded for user: {Username}", request.UserName);
             var (token, expireIn) = _jwtProvider.GenerateToken(user);
             await _userManager.UpdateAsync(user);
-            var response = new AuthResponse(user.Id, user.FirstName!, user.LastName!, user.Email, user.UserName, token, expireIn);
+            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn);
             return Result.Success(response);
         }
 

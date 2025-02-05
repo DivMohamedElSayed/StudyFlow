@@ -8,10 +8,11 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
     {
         Claim[] claims = [
             new(JwtRegisteredClaimNames.Sub,user.Id),
-            new(JwtRegisteredClaimNames.GivenName,user.FirstName),
-            new(JwtRegisteredClaimNames.FamilyName,user.LastName),
+            new(JwtRegisteredClaimNames.GivenName,user.FirstName!),
+            new(JwtRegisteredClaimNames.FamilyName,user.LastName!),
             new(JwtRegisteredClaimNames.Email,user.Email!),
-            new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+            new("ThemePreference",user.ThemePreference!)
         ];
         var encodingOptions = Encoding.UTF8.GetBytes(_options.AccessToken);
         var symmetricSecurityKey = new SymmetricSecurityKey(encodingOptions);

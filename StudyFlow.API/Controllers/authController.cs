@@ -1,11 +1,11 @@
 ﻿namespace StudyFlow.API.Controllers;
 
-[Route("[controller]")]
+[Route("auth")]
 [ApiController]
-public class authController(IAuthService authService, ILogger<authController> logger) : ControllerBase
+public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
 {
     private readonly IAuthService _authService = authService;
-    private readonly ILogger<authController> _logger = logger;
+    private readonly ILogger<AuthController> _logger = logger;
 
     [HttpPost("sign-up")]
     public async Task<IActionResult> SignUp([FromBody] SignUpRequest request, CancellationToken cancellationToken)

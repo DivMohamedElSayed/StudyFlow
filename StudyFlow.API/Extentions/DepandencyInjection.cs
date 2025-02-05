@@ -11,6 +11,7 @@ public static class DepandencyInjection
         services.AddConnectionConfig(configuration)
             .AddEndpointsApiExplorer()
             .AddIdentityConfig()
+            .AddCorsConfig()
             .AddValidationConfig()
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
@@ -88,7 +89,19 @@ public static class DepandencyInjection
     private static IServiceCollection AddRegistrationServicesConfig(this IServiceCollection services)
     {
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IUserService, UserService>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         return services;
     }
+
+    private static IServiceCollection AddCorsConfig(this IServiceCollection services) =>
+        services.AddCors(options =>
+        {
+            options.AddDefaultPolicy(option =>
+            {
+                option.AllowAnyHeader();
+                option.AllowAnyMethod();
+                option.AllowAnyOrigin();
+            });
+        });
 }

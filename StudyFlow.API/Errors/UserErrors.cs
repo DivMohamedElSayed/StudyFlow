@@ -15,11 +15,14 @@ public static class UserErrors
     new("user.user_disabled", "This account has been disabled. Please contact support.", StatusCodes.Status403Forbidden);
 
     public static readonly Error EmailNotConfirmed =
-    new("auth.email_not_confirmed", "Your email address is not confirmed. Please check your inbox and confirm your email.", StatusCodes.Status400BadRequest);
+    new("user.email_not_confirmed", "Your email address is not confirmed. Please check your inbox and confirm your email.", StatusCodes.Status400BadRequest);
 
     public static readonly Error LockedOut =
-    new("auth.account_locked", "Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.", StatusCodes.Status423Locked);
+    new("user.account_locked", "Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.", StatusCodes.Status423Locked);
 
     public static readonly Error UserNotFound =
     new("user.not_found", "The user was not found. Please check the provided information and try again.", StatusCodes.Status404NotFound);
+
+    public static readonly Error ThemeNotFound =
+        new("user.ThemeNotFound", "Invalid theme preference. Allowed values: dark, light, default.", StatusCodes.Status404NotFound);
 }

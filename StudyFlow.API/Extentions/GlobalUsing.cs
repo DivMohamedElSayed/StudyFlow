@@ -30,4 +30,6 @@ global using Microsoft.OpenApi.Models;
 global using Microsoft.AspNetCore.Authentication;
 global using Microsoft.AspNetCore.OpenApi;
 global using StudyFlow.API.OpenApiTransformer;
+global using StudyFlow.API.Contracts.Users;
 global using Scalar.AspNetCore;
+global using Microsoft.AspNetCore.Authorization;
