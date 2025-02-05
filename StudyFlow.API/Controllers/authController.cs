@@ -1,5 +1,4 @@
 ﻿namespace StudyFlow.API.Controllers;
-
 [Route("auth")]
 [ApiController]
 public class AuthController(IAuthService authService, ILogger<AuthController> logger) : ControllerBase
