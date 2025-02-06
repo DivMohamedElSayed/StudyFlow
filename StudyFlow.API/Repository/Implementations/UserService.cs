@@ -24,6 +24,12 @@ public class UserService(
         _logger.LogError("Failed to update theme preference for UserId: {UserId}. Error Code: {ErrorCode}, Description: {ErrorMessage}", id, error.Code, error.Description);
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
+    public async Task<Result<UserThemeResponse>> GetThemePreferencesAsync(string id)
+    {
+        if (await _userManager.FindByIdAsync(id) is not { } user)
+            return Result.Failure<UserThemeResponse>(UserErrors.UserNotFound);
+        return Result.Success(UserThemeResponse.FromUser(user));
+    }
 
     public async Task<Result<UserProfileResponse>> GetInfoAsync(string id)
     {

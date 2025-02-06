@@ -11,6 +11,7 @@ public class AuthService(
     private readonly ILogger<AuthService> _logger = logger;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IJwtProvider _jwtProvider = jwtProvider;
+    private readonly int _refreshTokenExpiryDay = 30;
 
     public async Task<Result<AuthResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
     {
@@ -30,8 +31,15 @@ public class AuthService(
         {
             _logger.LogInformation("Sign-in succeeded for user: {Username}", request.UserName);
             var (token, expireIn) = _jwtProvider.GenerateToken(user);
+            var refreshTokenCode = GenerateRefreshToken();
+            var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
+            user.RefreshTokens.Add(new RefreshToken
+            {
+                RefreshTokenCode = refreshTokenCode,
+                ExpireOn = refreshTokenExpirations
+            });
             await _userManager.UpdateAsync(user);
-            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn);
+            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response);
         }
 
@@ -74,7 +82,15 @@ public class AuthService(
             _logger.LogInformation("User '{Username}' created successfully. Token: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
             var (token, expireIn) = _jwtProvider.GenerateToken(user);
-            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn);
+            var refreshTokenCode = GenerateRefreshToken();
+            var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
+            user.RefreshTokens.Add(new RefreshToken
+            {
+                RefreshTokenCode = refreshTokenCode,
+                ExpireOn = refreshTokenExpirations
+            });
+            await _userManager.UpdateAsync(user);
+            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response);
         }
 
@@ -85,4 +101,96 @@ public class AuthService(
 
         return Result.Failure<AuthResponse>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
+    public async Task<Result<AuthResponse>> RegenerateRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Starting to regenerate refresh token for user with access token.");
+        // Validate JWT access token
+        if (_jwtProvider.ValidateToken(request.AccessToken) is not { } userId)
+            return Result.Failure<AuthResponse>(UserErrors.InvalidJwtToken);
+
+        // Fetch user
+        if( await _userManager.FindByIdAsync(userId) is not { } user)
+            return Result.Failure<AuthResponse>(UserErrors.UserNotFound);
+
+        // Check if the user is disabled or locked
+        if (user.IsDisabled)
+            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+        if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
+            return Result.Failure<AuthResponse>(UserErrors.LockedOut);
+
+        // Retrieve the active refresh token for the access token
+        var userRefreshToken = user.RefreshTokens.SingleOrDefault(rt =>
+            rt.RefreshTokenCode == request.RefreshToken &&
+            rt.IsActive
+        );
+
+        if (userRefreshToken is null)
+            return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
+
+        // Ensure refresh token has not expired
+        if (userRefreshToken.IsExpired)
+            return Result.Failure<AuthResponse>(UserErrors.ExpiredRefreshToken);
+
+        // Revoke the old refresh token
+        userRefreshToken.RevokedOn = DateTime.UtcNow;
+        _logger.LogInformation("Refresh token revoked for user {UserId}.", userId);
+
+        // Generate new tokens
+        var (newAccessToken, newExpireIn) = _jwtProvider.GenerateToken(user);
+        var newRefreshToken = GenerateRefreshToken();
+        var newRefreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
+
+        // Add new refresh token
+        user.RefreshTokens.Add(new RefreshToken
+        {
+            RefreshTokenCode = newRefreshToken,  // Store refresh token separately
+            ExpireOn = newRefreshTokenExpiration,
+        });
+
+        // Update user in database
+        await _userManager.UpdateAsync(user);
+        _logger.LogInformation("New refresh token generated and user {UserId} updated in the database.", userId);
+        // Return response
+        var response = new AuthResponse(user.Id, user.Email, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
+        _logger.LogInformation("Refresh token regeneration completed successfully for user {UserId}.", userId);
+        return Result.Success(response);
+    }
+    public async Task<Result> RevokeRefreshTokenAsync(RefreshTokenRequest request,CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Starting to revoke refresh token for user with access token.");
+        // Validate JWT access token
+        if (_jwtProvider.ValidateToken(request.AccessToken) is not { } userId)
+            return Result.Failure<AuthResponse>(UserErrors.InvalidJwtToken);
+
+        // Fetch user
+        if (await _userManager.FindByIdAsync(userId) is not { } user)
+            return Result.Failure<AuthResponse>(UserErrors.UserNotFound);
+
+        // Check if the user is disabled or locked
+        if (user.IsDisabled)
+            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+        if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
+            return Result.Failure<AuthResponse>(UserErrors.LockedOut);
+
+        // Retrieve the active refresh token for the access token
+        var userRefreshToken = user.RefreshTokens.SingleOrDefault(rt =>
+            rt.RefreshTokenCode == request.RefreshToken &&
+            rt.IsActive
+        );
+
+        if (userRefreshToken is null)
+            return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
+
+        // Ensure refresh token has not expired
+        if (userRefreshToken.IsExpired)
+            return Result.Failure<AuthResponse>(UserErrors.ExpiredRefreshToken);
+
+        // Revoke the old refresh token
+        userRefreshToken.RevokedOn = DateTime.UtcNow;
+        _logger.LogInformation("Refresh token revoked for user {UserId}.", userId);
+        await _userManager.UpdateAsync(user);
+        return Result.Success();
+    }
+    private static string GenerateRefreshToken() =>
+        Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 }

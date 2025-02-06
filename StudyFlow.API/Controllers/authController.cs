@@ -21,4 +21,16 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         var result = await _authService.SignInAsync(request, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
+    [HttpPost("refresh-token")]
+    public async Task<IActionResult> GetRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
+    {
+        var result = await _authService.RegenerateRefreshTokenAsync(request, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
+    [HttpPut("revoke-refresh-token")]
+    public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest request,CancellationToken cancellationToken)
+    {
+        var result = await _authService.RevokeRefreshTokenAsync(request,cancellationToken);
+        return result.IsSuccess ? NoContent() : result.ToProblem();
+    }
 }

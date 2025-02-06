@@ -25,4 +25,13 @@ public static class UserErrors
 
     public static readonly Error ThemeNotFound =
         new("user.ThemeNotFound", "Invalid theme preference. Allowed values: dark, light, default.", StatusCodes.Status404NotFound);
+    public static readonly Error InvalidJwtToken =
+    new("user.InvalidJwtToken", "The provided JWT token is invalid or expired.", StatusCodes.Status400BadRequest);
+    public static readonly Error InvalidRefreshToken =
+    new("user.InvalidRefreshToken", "The provided refresh token is invalid or expired.", StatusCodes.Status400BadRequest);
+    public static readonly Error ExpiredRefreshToken =
+    new("Auth.ExpiredRefreshToken", "The provided refresh token has expired.", StatusCodes.Status400BadRequest);
+
+
+
 }

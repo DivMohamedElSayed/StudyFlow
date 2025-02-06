@@ -28,5 +28,9 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
             PasswordHash = DefaultUser.AdminPassword,
             ThemePreference =ThemeConstants.Default
         });
+        builder.OwnsMany(r => r.RefreshTokens)
+            .ToTable("RefreshTokens")
+            .WithOwner()
+            .HasForeignKey("UserId");
     }
 }

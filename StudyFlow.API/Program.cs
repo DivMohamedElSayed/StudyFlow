@@ -21,7 +21,7 @@ app.UseHttpsRedirection();
 
 app.UseCors();
 
-app.UseMiddleware<RejectExtraFieldsMiddleware>();
+app.UseRejectExtraFields();
 
 app.UseAuthorization();
 
