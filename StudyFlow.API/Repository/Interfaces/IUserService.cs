@@ -8,4 +8,5 @@ public interface IUserService
     Task<Result<UserProfileResponse>> GetInfoAsync(string id);
 
     Task<Result> UpdateInfoAsync(string id, UserProfileRequest request);
+    Task<Result> ChangePasswordAsync(string id, ChangePasswordRequest request);
 }

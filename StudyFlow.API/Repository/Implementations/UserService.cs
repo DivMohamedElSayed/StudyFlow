@@ -26,6 +26,7 @@ public class UserService(
     }
     public async Task<Result<UserThemeResponse>> GetThemePreferencesAsync(string id)
     {
+        _logger.LogInformation("Theme request received for UserId: {UserId}", id);
         if (await _userManager.FindByIdAsync(id) is not { } user)
             return Result.Failure<UserThemeResponse>(UserErrors.UserNotFound);
         return Result.Success(UserThemeResponse.FromUser(user));
@@ -54,5 +55,18 @@ public class UserService(
             );
         _logger.LogInformation("Successfully updated user profile for user ID: {UserId}", id);
         return Result.Success();
+    }
+    public async Task<Result> ChangePasswordAsync(string id,ChangePasswordRequest request)
+    {
+        _logger.LogInformation("Fetching user profile for user ID: {UserId}", id);
+        if (await _userManager.FindByIdAsync(id) is not { } user)
+            return Result.Failure(UserErrors.UserNotFound);
+        var result = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        if (result.Succeeded)
+            return Result.Success();
+        _logger.LogInformation("Successfully change password user profile for user ID: {UserId},and the new Password: {newPassword}", id,request.NewPassword);
+        var error = result.Errors.First();
+        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+
     }
 }
