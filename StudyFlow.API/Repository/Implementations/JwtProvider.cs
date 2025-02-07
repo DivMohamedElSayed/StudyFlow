@@ -4,7 +4,7 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
 {
     private readonly JwtOptions _options = options.Value;
 
-    public (string token, int expireIn) GenerateToken(ApplicationUser user)
+    public (string token, int expireIn) GenerateToken(ApplicationUser user,IEnumerable<string> roles)
     {
         Claim[] claims = [
             new(JwtRegisteredClaimNames.Sub,user.Id),
@@ -12,8 +12,7 @@ public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
             new(JwtRegisteredClaimNames.FamilyName,user.LastName!),
             new(JwtRegisteredClaimNames.Email,user.Email!),
             new(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
-            new("ThemePreference",user.ThemePreference!),
-            //new(nameof(role))
+            new(nameof(roles),JsonSerializer.Serialize(roles),JsonClaimValueTypes.JsonArray)
         ];
         var encodingOptions = Encoding.UTF8.GetBytes(_options.AccessToken);
         var symmetricSecurityKey = new SymmetricSecurityKey(encodingOptions);

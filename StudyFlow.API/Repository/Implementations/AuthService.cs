@@ -30,7 +30,8 @@ public class AuthService(
         if (result.Succeeded)
         {
             _logger.LogInformation("Sign-in succeeded for user: {Username}", request.UserName);
-            var (token, expireIn) = _jwtProvider.GenerateToken(user);
+            var userRoles = await GetUserRoles(user,cancellationToken);
+            var (token, expireIn) = _jwtProvider.GenerateToken(user,userRoles);
             var refreshTokenCode = GenerateRefreshToken();
             var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
             user.RefreshTokens.Add(new RefreshToken
@@ -81,7 +82,8 @@ public class AuthService(
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             _logger.LogInformation("User '{Username}' created successfully. Token: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
-            var (token, expireIn) = _jwtProvider.GenerateToken(user);
+            var userRoles = await GetUserRoles(user, cancellationToken);
+            var (token, expireIn) = _jwtProvider.GenerateToken(user, userRoles);
             var refreshTokenCode = GenerateRefreshToken();
             var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
             user.RefreshTokens.Add(new RefreshToken
@@ -136,7 +138,8 @@ public class AuthService(
         _logger.LogInformation("Refresh token revoked for user {UserId}.", userId);
 
         // Generate new tokens
-        var (newAccessToken, newExpireIn) = _jwtProvider.GenerateToken(user);
+        var userRoles = await GetUserRoles(user, cancellationToken);
+        var (newAccessToken, newExpireIn) = _jwtProvider.GenerateToken(user, userRoles);
         var newRefreshToken = GenerateRefreshToken();
         var newRefreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
 
@@ -226,4 +229,6 @@ public class AuthService(
     }
     private static string GenerateRefreshToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+    private async Task<IEnumerable<string>> GetUserRoles (ApplicationUser user,CancellationToken cancellationToken = default) =>
+        await _userManager.GetRolesAsync(user);
 }
