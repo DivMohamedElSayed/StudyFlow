@@ -191,6 +191,39 @@ public class AuthService(
         await _userManager.UpdateAsync(user);
         return Result.Success();
     }
+    public async Task<Result> SendForgetPasswordCodeAsync(ForgetPasswordRequest request)
+    {
+        if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
+            return Result.Success(); // 
+        if(!user.EmailConfirmed)
+            return Result.Failure(UserErrors.EmailNotConfirmed);
+        var accessToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+        accessToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(accessToken));
+        _logger.LogInformation("Reset Access Token: {accessToken}",accessToken);
+        // TODO: Send Reset Password Email
+        return Result.Success();
+    }
+    public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request)
+    {
+        var user = await _userManager.FindByEmailAsync(request.Email);
+        if(user is null || !user.EmailConfirmed)
+            return Result.Failure(UserErrors.InvalidCode);
+        IdentityResult result;
+        try
+        {
+            var accessToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.AccessToken));
+            result = await _userManager.ResetPasswordAsync(user, accessToken, request.NewPassword);
+        }
+        catch (FormatException)
+        {
+            result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
+        }
+
+        if(result.Succeeded)
+            return Result.Success();
+        var error = result.Errors.First();
+        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
+    }
     private static string GenerateRefreshToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
 }

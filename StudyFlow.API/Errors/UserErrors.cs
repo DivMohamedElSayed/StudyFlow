@@ -15,7 +15,7 @@ public static class UserErrors
     new("user.user_disabled", "This account has been disabled. Please contact support.", StatusCodes.Status403Forbidden);
 
     public static readonly Error EmailNotConfirmed =
-    new("user.email_not_confirmed", "Your email address is not confirmed. Please check your inbox and confirm your email.", StatusCodes.Status400BadRequest);
+    new("user.email_not_confirmed", "Your email address is not confirmed. Please check your inbox and confirm your email.", StatusCodes.Status401Unauthorized);
 
     public static readonly Error LockedOut =
     new("user.account_locked", "Your account is temporarily locked due to multiple failed login attempts. Please try again later or contact support.", StatusCodes.Status423Locked);
@@ -26,11 +26,14 @@ public static class UserErrors
     public static readonly Error ThemeNotFound =
         new("user.ThemeNotFound", "Invalid theme preference. Allowed values: dark, light, default.", StatusCodes.Status404NotFound);
     public static readonly Error InvalidJwtToken =
-    new("user.InvalidJwtToken", "The provided JWT token is invalid or expired.", StatusCodes.Status400BadRequest);
+    new("user.InvalidJwtToken", "The provided JWT token is invalid or expired.", StatusCodes.Status401Unauthorized);
     public static readonly Error InvalidRefreshToken =
     new("user.InvalidRefreshToken", "The provided refresh token is invalid or expired.", StatusCodes.Status400BadRequest);
     public static readonly Error ExpiredRefreshToken =
     new("Auth.ExpiredRefreshToken", "The provided refresh token has expired.", StatusCodes.Status400BadRequest);
+
+    public static readonly Error InvalidCode =
+    new("User.InvalidCode", "The provided code is invalid or has expired. Please verify the code and try again.", StatusCodes.Status401Unauthorized);
 
 
 
