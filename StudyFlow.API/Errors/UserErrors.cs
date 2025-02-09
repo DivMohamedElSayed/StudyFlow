@@ -1,4 +1,6 @@
-﻿namespace StudyFlow.API.Errors;
+﻿using System.Security.Cryptography.Xml;
+
+namespace StudyFlow.API.Errors;
 
 public static class UserErrors
 {
@@ -34,6 +36,10 @@ public static class UserErrors
 
     public static readonly Error InvalidCode =
     new("User.InvalidCode", "The provided code is invalid or has expired. Please verify the code and try again.", StatusCodes.Status401Unauthorized);
+    public static readonly Error UserCreationFailed =
+        new("user.UserCreationFailed", "Failed to create the user. Please check the provided details and try again.", StatusCodes.Status400BadRequest);
+    public static readonly Error GoogleAuthFailed =
+        new("user.GoogleAuthFailed", "Google authentication failed. Please check your credentials and try again.", StatusCodes.Status401Unauthorized);
 
 
 

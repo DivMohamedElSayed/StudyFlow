@@ -226,6 +226,9 @@ namespace StudyFlow.API.Persistences.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ExternalProviderId")
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
@@ -259,6 +262,10 @@ namespace StudyFlow.API.Persistences.Migrations
 
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
@@ -305,6 +312,7 @@ namespace StudyFlow.API.Persistences.Migrations
                             NormalizedUserName = "ADMIN22STUDYFLOW",
                             PasswordHash = "AQAAAAIAAYagAAAAEOuaLGh40PnMyPUT09tk41T2miBgDfaArCPoYUZUfo1hsijP5V5+HXLJ1FBj9vuYSQ==",
                             PhoneNumberConfirmed = false,
+                            Provider = "local",
                             SecurityStamp = "8D12470228E446939E85471A8487C29B",
                             ThemePreference = "default",
                             TwoFactorEnabled = false,

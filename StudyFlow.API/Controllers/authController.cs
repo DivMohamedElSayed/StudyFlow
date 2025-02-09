@@ -45,4 +45,11 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
         var result = await _authService.ResetPasswordAsync(request);
         return result.IsSuccess? Ok() : result.ToProblem();
     }
+    [HttpPost("signin-google")]
+    public async Task<IActionResult> GoogleSignIn([FromBody] GoogleSignInRequest request,CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("Received Google sign-in request");
+        var result = await _authService.GoogleSignInAsync(request,cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+    }
 }

@@ -12,8 +12,8 @@ using StudyFlow.API.Persistences.Context;
 namespace StudyFlow.API.Persistences.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20250203144012_AddIsDisabledColumn")]
-    partial class AddIsDisabledColumn
+    [Migration("20250209143002_addExternalSignIn")]
+    partial class addExternalSignIn
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,32 +24,6 @@ namespace StudyFlow.API.Persistences.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
-                {
-                    b.Property<string>("Id")
-                        .HasColumnType("text");
-
-                    b.Property<string>("ConcurrencyStamp")
-                        .IsConcurrencyToken()
-                        .HasColumnType("text");
-
-                    b.Property<string>("Name")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("NormalizedName")
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("NormalizedName")
-                        .IsUnique()
-                        .HasDatabaseName("RoleNameIndex");
-
-                    b.ToTable("AspNetRoles", (string)null);
-                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
@@ -157,6 +131,85 @@ namespace StudyFlow.API.Persistences.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("StudyFlow.API.Entities.ApplicationRole", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("text");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("NormalizedName")
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("NormalizedName")
+                        .IsUnique()
+                        .HasDatabaseName("RoleNameIndex");
+
+                    b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "1AC74F3B-4C92-42B7-9E6E-AD7E75E5771C",
+                            ConcurrencyStamp = "15F497FA-8AC2-4F62-987C-1BB31EA5F9A3",
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        },
+                        new
+                        {
+                            Id = "E99790C2-ED3B-4C39-9C74-9C7513547029",
+                            ConcurrencyStamp = "ADDFBE9A-C49B-48E2-8F75-900DB06F5777",
+                            IsDefault = true,
+                            IsDeleted = false,
+                            Name = "Student",
+                            NormalizedName = "STUDENT"
+                        },
+                        new
+                        {
+                            Id = "D2A3C1E5-8B22-4C78-9F44-3B8B5F4A7E6D",
+                            ConcurrencyStamp = "5F9A3D7B-6C12-4F88-BE47-1A2F9C8D6712",
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Name = "Teacher",
+                            NormalizedName = "TEACHER"
+                        },
+                        new
+                        {
+                            Id = "8F12A3D5-6C44-4F99-AE35-2D9B4C5E8A71",
+                            ConcurrencyStamp = "A71C4D8F-3B29-4F61-82E7-9D4A6C8F371B",
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Name = "Parent",
+                            NormalizedName = "PARENT"
+                        },
+                        new
+                        {
+                            Id = "3C5D8A1F-7B44-4E99-AC61-5F7D3B29E4A8",
+                            ConcurrencyStamp = "C8A1F3D5-6B29-4F77-91E2-4D9B5C6A731F",
+                            IsDefault = false,
+                            IsDeleted = false,
+                            Name = "Guest",
+                            NormalizedName = "GUEST"
+                        });
+                });
+
             modelBuilder.Entity("StudyFlow.API.Entities.ApplicationUser", b =>
                 {
                     b.Property<string>("Id")
@@ -176,8 +229,10 @@ namespace StudyFlow.API.Persistences.Migrations
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("ExternalProviderId")
+                        .HasColumnType("text");
+
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -185,7 +240,6 @@ namespace StudyFlow.API.Persistences.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("LastName")
-                        .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
@@ -212,8 +266,20 @@ namespace StudyFlow.API.Persistences.Migrations
                     b.Property<bool>("PhoneNumberConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("text");
+
+                    b.Property<string>("ThemePreference")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)")
+                        .HasDefaultValue("default")
+                        .HasComment("User's theme preference (dark/light/default)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("boolean");
@@ -232,11 +298,34 @@ namespace StudyFlow.API.Persistences.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "EC453D56-FD0A-467B-9250-AD00F5CFEAF6",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "3430654E-D391-414E-BE52-35A30D75A969",
+                            Email = "admin@study-flow.com",
+                            EmailConfirmed = true,
+                            FirstName = "Study",
+                            IsDisabled = false,
+                            LastName = "Flow",
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ADMIN@STUDY-FLOW.COM",
+                            NormalizedUserName = "ADMIN22STUDYFLOW",
+                            PasswordHash = "AQAAAAIAAYagAAAAEOuaLGh40PnMyPUT09tk41T2miBgDfaArCPoYUZUfo1hsijP5V5+HXLJ1FBj9vuYSQ==",
+                            PhoneNumberConfirmed = false,
+                            Provider = "local",
+                            SecurityStamp = "8D12470228E446939E85471A8487C29B",
+                            ThemePreference = "default",
+                            TwoFactorEnabled = false,
+                            UserName = "admin22studyflow"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("StudyFlow.API.Entities.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -263,7 +352,7 @@ namespace StudyFlow.API.Persistences.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserRole<string>", b =>
                 {
-                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                    b.HasOne("StudyFlow.API.Entities.ApplicationRole", null)
                         .WithMany()
                         .HasForeignKey("RoleId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -283,6 +372,43 @@ namespace StudyFlow.API.Persistences.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("StudyFlow.API.Entities.ApplicationUser", b =>
+                {
+                    b.OwnsMany("StudyFlow.API.Entities.RefreshToken", "RefreshTokens", b1 =>
+                        {
+                            b1.Property<string>("UserId")
+                                .HasColumnType("text");
+
+                            b1.Property<int>("Id")
+                                .ValueGeneratedOnAdd()
+                                .HasColumnType("integer");
+
+                            NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b1.Property<int>("Id"));
+
+                            b1.Property<DateTime>("CreatedOn")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<DateTime>("ExpireOn")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.Property<string>("RefreshTokenCode")
+                                .IsRequired()
+                                .HasColumnType("text");
+
+                            b1.Property<DateTime?>("RevokedOn")
+                                .HasColumnType("timestamp with time zone");
+
+                            b1.HasKey("UserId", "Id");
+
+                            b1.ToTable("RefreshTokens", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("UserId");
+                        });
+
+                    b.Navigation("RefreshTokens");
                 });
 #pragma warning restore 612, 618
         }

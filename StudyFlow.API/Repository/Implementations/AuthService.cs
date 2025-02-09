@@ -4,13 +4,15 @@ public class AuthService(
         UserManager<ApplicationUser> userManager,
         ILogger<AuthService> logger,
         SignInManager<ApplicationUser> signInManager,
-        IJwtProvider jwtProvider
+        IJwtProvider jwtProvider,
+        IOptions<GoogleOptions> options
     ) : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<AuthService> _logger = logger;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IJwtProvider _jwtProvider = jwtProvider;
+    private readonly GoogleOptions _options = options.Value;
     private readonly int _refreshTokenExpiryDay = 30;
 
     public async Task<Result<AuthResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
@@ -197,7 +199,7 @@ public class AuthService(
     public async Task<Result> SendForgetPasswordCodeAsync(ForgetPasswordRequest request)
     {
         if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
-            return Result.Success(); // 
+            return Result.Success(); // To the hacker  
         if(!user.EmailConfirmed)
             return Result.Failure(UserErrors.EmailNotConfirmed);
         var accessToken = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -209,7 +211,7 @@ public class AuthService(
     public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if(user is null || !user.EmailConfirmed)
+        if (user is null || !user.EmailConfirmed)
             return Result.Failure(UserErrors.InvalidCode);
         IdentityResult result;
         try
@@ -227,6 +229,115 @@ public class AuthService(
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
     }
+    public async Task<Result<AuthResponse>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var payload = await ValidateGoogleTokenAsync(request.GoogleToken);
+            if (payload == null)
+            {
+                return Result.Failure<AuthResponse>(UserErrors.InvalidCode);
+            }
+
+            // Find or create user
+            var user = await GetOrCreateGoogleUserAsync(payload);
+
+            // Generate JWT and refresh token
+            return await GenerateAuthResponseAsync(user);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Google authentication failed");
+            return Result.Failure<AuthResponse>(UserErrors.GoogleAuthFailed);
+        }
+    }
+    private async Task<ApplicationUser> GetOrCreateGoogleUserAsync(GoogleJsonWebSignature.Payload payload)
+    {
+        // First try to find user by Google ID
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(u =>
+                u.Provider == AuthProvider.Google &&
+                u.ExternalProviderId == payload.Subject);
+
+        // If not found, try by email
+        if (user == null)
+        {
+            user = await _userManager.FindByEmailAsync(payload.Email);
+
+            if (user != null && user.Provider != AuthProvider.Google)
+            {
+                _logger.LogWarning("User {Email} tried to sign in with Google but already exists with {Provider}",
+                    payload.Email, user.Provider);
+                throw new InvalidOperationException("User already exists with different provider");
+            }
+        }
+
+        // If still no user, create new one
+        if (user == null)
+        {
+            user = new ApplicationUser
+            {
+                Email = payload.Email,
+                UserName = GenerateUsername(payload.Email),
+                EmailConfirmed = true,
+                FirstName = payload.GivenName,
+                LastName = payload.FamilyName,
+                Provider = AuthProvider.Google,
+                ExternalProviderId = payload.Subject
+            };
+
+            var result = await _userManager.CreateAsync(user);
+            if (!result.Succeeded)
+            {
+                _logger.LogError("Failed to create user from Google authentication: {Errors}",
+                    string.Join(", ", result.Errors.Select(e => e.Description)));
+                throw new ApplicationException("Failed to create user");
+            }
+
+            await _userManager.AddToRoleAsync(user, "User");
+        }
+
+        return user;
+    }
+    private static string GenerateUsername(string email) =>
+      $"{email.Split('@')[0]}{DateTime.UtcNow.Ticks % 1000}";
+    private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(ApplicationUser user)
+    {
+        var roles = await _userManager.GetRolesAsync(user);
+        var (accessToken, expireIn) = _jwtProvider.GenerateToken(user, roles);
+
+        // Generate refresh token
+        var refreshToken = GenerateRefreshToken();
+        var refreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
+
+        // Add refresh token to user
+        user.RefreshTokens.Add(new RefreshToken
+        {
+            RefreshTokenCode = refreshToken,
+            ExpireOn = refreshTokenExpiration
+        });
+
+        await _userManager.UpdateAsync(user);
+
+        return Result.Success(new AuthResponse(
+            user.Id,
+            user.Email,
+            user.UserName,
+            accessToken,
+            expireIn,
+            refreshToken,
+            refreshTokenExpiration
+        ));
+    }
+    private async Task<GoogleJsonWebSignature.Payload> ValidateGoogleTokenAsync(string token)
+    {
+        var settings = new GoogleJsonWebSignature.ValidationSettings
+        {
+            Audience = new[] { _options.ClientId }
+        };
+        return await GoogleJsonWebSignature.ValidateAsync(token, settings);
+    }
+
     private static string GenerateRefreshToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     private async Task<IEnumerable<string>> GetUserRoles (ApplicationUser user,CancellationToken cancellationToken = default) =>

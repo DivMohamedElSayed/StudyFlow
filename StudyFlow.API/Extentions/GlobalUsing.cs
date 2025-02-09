@@ -9,6 +9,8 @@ global using System.Security.Cryptography;
 global using FluentValidation;
 global using FluentValidation.AspNetCore;
 
+global using Google.Apis.Auth;
+
 global using Mapster;
 global using MapsterMapper;
 

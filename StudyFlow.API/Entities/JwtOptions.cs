@@ -2,7 +2,7 @@
 
 public class JwtOptions
 {
-    public static string SectionName = "Jwt";
+    public const string SectionName = "Authentication:Jwt";
 
     [Required(AllowEmptyStrings = false, ErrorMessage = "AccessToken is required.")]
     public string AccessToken { get; init; } = string.Empty;

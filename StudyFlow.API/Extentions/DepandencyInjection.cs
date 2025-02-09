@@ -38,7 +38,7 @@ public static class DepandencyInjection
         services.Configure<IdentityOptions>(option =>
         {
             option.Password.RequiredLength = 8;
-            //option.SignIn.RequireConfirmedEmail = true;
+            option.SignIn.RequireConfirmedEmail = true;
             option.SignIn.RequireConfirmedPhoneNumber = false;
             option.User.RequireUniqueEmail = true;
             option.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Lockout duration
@@ -52,7 +52,11 @@ public static class DepandencyInjection
         services.AddOptions<JwtOptions>()
             .BindConfiguration(JwtOptions.SectionName)
             .ValidateDataAnnotations();
-        var jwtoptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>();
+        var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>();
+        services.AddOptions<GoogleOptions>()
+            .BindConfiguration(GoogleOptions.SectionName)
+            .ValidateDataAnnotations();
+        var googleOptions = configuration.GetSection(GoogleOptions.SectionName).Get<GoogleOptions>();
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -64,13 +68,17 @@ public static class DepandencyInjection
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
-                ValidIssuer = jwtoptions!.Issuer,
+                ValidIssuer = jwtOptions!.Issuer,
                 ValidateAudience = true,
-                ValidAudience = jwtoptions!.Audience,
+                ValidAudience = jwtOptions!.Audience,
                 ValidateLifetime = true,
                 ValidateIssuerSigningKey = true,
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtoptions.AccessToken))
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.AccessToken))
             };
+        }).AddGoogle(options =>
+        {
+            options.ClientId = googleOptions!.ClientId;
+            options.ClientSecret = googleOptions!.ClientSecret;
         });
         return services;
     }
@@ -111,7 +119,7 @@ public static class DepandencyInjection
         {
             options.JsonSerializerOptions.PropertyNameCaseInsensitive = true; // Keep case-insensitive deserialization
             options.JsonSerializerOptions.AllowTrailingCommas = false; // Prevents extra commas
-            options.JsonSerializerOptions.ReadCommentHandling = System.Text.Json.JsonCommentHandling.Disallow; // Disallow comments
+            options.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Disallow; // Disallow comments
         });
         return services;
     }
