@@ -38,7 +38,7 @@ public static class DepandencyInjection
         services.Configure<IdentityOptions>(option =>
         {
             option.Password.RequiredLength = 8;
-            option.SignIn.RequireConfirmedEmail = true;
+            //option.SignIn.RequireConfirmedEmail = true;
             option.SignIn.RequireConfirmedPhoneNumber = false;
             option.User.RequireUniqueEmail = true;
             option.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15); // Lockout duration
@@ -109,7 +109,8 @@ public static class DepandencyInjection
             {
                 option.AllowAnyHeader();
                 option.AllowAnyMethod();
-                option.AllowAnyOrigin();
+                //option.AllowAnyOrigin();
+                option.WithOrigins("http://localhost:3000");
             });
         });
     private static IServiceCollection AddFilterConfig(this IServiceCollection services)
