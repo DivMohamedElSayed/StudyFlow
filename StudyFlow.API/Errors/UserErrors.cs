@@ -42,4 +42,7 @@ public static class UserErrors
         new("user.GoogleAuthFailed", "Google authentication failed. Please check your credentials and try again.", StatusCodes.Status401Unauthorized);
     public static readonly Error InvalidUserData =
         new("user.InvalidUserData", "First name and last name are required", StatusCodes.Status400BadRequest);
+    public static readonly Error DuplicatedConfirmation =
+    new("user.ConfirmationDuplicated", "The confirmation request has already been processed.", StatusCodes.Status409Conflict);
+
 }

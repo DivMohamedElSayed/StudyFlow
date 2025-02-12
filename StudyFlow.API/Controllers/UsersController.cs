@@ -17,10 +17,4 @@ public class UsersController(IUserService userService) : ControllerBase
         var result = await _userService.GetAsync(id);
         return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
     }
-    [HttpPost("")]
-    public async Task<IActionResult> Create([FromBody] CreateUserRequest request)
-    {
-        var result = await _userService.CreateAsync(User.GetUserId()!, request);
-        return result.IsSuccess ? Created() : result.ToProblem();
-    }
 }

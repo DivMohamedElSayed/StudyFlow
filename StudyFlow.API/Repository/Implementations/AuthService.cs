@@ -1,4 +1,6 @@
-﻿namespace StudyFlow.API.Repository.Implementations;
+﻿using StudyFlow.API.Errors;
+
+namespace StudyFlow.API.Repository.Implementations;
 
 public class AuthService(
         UserManager<ApplicationUser> userManager,
@@ -234,6 +236,38 @@ public class AuthService(
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
     }
+    public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request)
+    {
+        if (await _userManager.FindByIdAsync(request.UserId) is not { } user)
+            return Result.Failure(UserErrors.InvalidCode);
+
+        if (user.EmailConfirmed)
+            return Result.Failure(UserErrors.DuplicatedConfirmation);
+
+        var code = request.Code;
+
+        try
+        {
+            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
+        }
+        catch (FormatException)
+        {
+            return Result.Failure(UserErrors.InvalidCode);
+        }
+
+        var result = await _userManager.ConfirmEmailAsync(user, code);
+
+        if (result.Succeeded)
+        {
+            await _userManager.AddToRoleAsync(user, DefaultRoles.Student);
+            return Result.Success();
+        }
+
+        var error = result.Errors.First();
+
+        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+    }
+
     public async Task<Result<AuthResponseSignIn>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
     {
         try
@@ -355,7 +389,7 @@ public class AuthService(
              new Dictionary<string, string>
              {
                 { "{{userName}}", user.UserName! },
-                    { "{{action_url}}", $"{origin}/auth/checkmail?userId={user.Id}&code={code}" }
+                    { "{{action_url}}", $"{origin}/auth/verify-email?userId={user.Id}&code={code}" }
              }
         );
         await _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody);
