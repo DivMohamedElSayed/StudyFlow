@@ -1,9 +1,7 @@
 ﻿namespace StudyFlow.API.Contracts.Authentications;
 
-public record AuthResponseSignIn(
+public record AuthResponseSignUp(
     string Id,
-    string? Email,
-    string? UserName,
     string AccessToken,
     int ExpireIn,
     string RefreshToken,

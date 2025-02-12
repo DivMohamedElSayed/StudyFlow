@@ -40,7 +40,6 @@ public static class UserErrors
         new("user.UserCreationFailed", "Failed to create the user. Please check the provided details and try again.", StatusCodes.Status400BadRequest);
     public static readonly Error GoogleAuthFailed =
         new("user.GoogleAuthFailed", "Google authentication failed. Please check your credentials and try again.", StatusCodes.Status401Unauthorized);
-
-
-
+    public static readonly Error InvalidUserData =
+        new("user.InvalidUserData", "First name and last name are required", StatusCodes.Status400BadRequest);
 }

@@ -5,26 +5,30 @@ public class AuthService(
         ILogger<AuthService> logger,
         SignInManager<ApplicationUser> signInManager,
         IJwtProvider jwtProvider,
-        IOptions<GoogleOptions> options
+        IOptions<GoogleOptions> options,
+        IHttpContextAccessor httpContextAccessor,
+        IEmailSender emailSender
     ) : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<AuthService> _logger = logger;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IJwtProvider _jwtProvider = jwtProvider;
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+    private readonly IEmailSender _emailSender = emailSender;
     private readonly GoogleOptions _options = options.Value;
     private readonly int _refreshTokenExpiryDay = 30;
 
-    public async Task<Result<AuthResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponseSignIn>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Attempting to sign in with username: {Username}", request.UserName);
 
         // Find the user by username instead of email
         if (await _userManager.FindByNameAsync(request.UserName) is not { } user)
-            return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.InvalidCredentials);
 
         if (user.IsDisabled)
-            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.UserIsDisabled);
 
         _logger.LogInformation("User account is active. Attempting password sign-in for username: {Username}", request.UserName);
 
@@ -42,7 +46,7 @@ public class AuthService(
                 ExpireOn = refreshTokenExpirations
             });
             await _userManager.UpdateAsync(user);
-            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
+            var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response);
         }
 
@@ -52,10 +56,10 @@ public class AuthService(
             ? UserErrors.LockedOut
             : UserErrors.InvalidCredentials;
 
-        return Result.Failure<AuthResponse>(error);
+        return Result.Failure<AuthResponseSignIn>(error);
     }
 
-    public async Task<Result<AuthResponse>> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponseSignUp>> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting user signup process for Email: {Email}, Username: {Username}", request.Email, request.UserName);
         // Check if email already exists
@@ -63,7 +67,7 @@ public class AuthService(
         if (emailExists)
         {
             _logger.LogWarning("Signup failed: Email '{Email}' is already registered.", request.Email);
-            return Result.Failure<AuthResponse>(UserErrors.DuplicatedEmail);
+            return Result.Failure<AuthResponseSignUp>(UserErrors.DuplicatedEmail);
         }
 
         // Check if username already exists
@@ -71,7 +75,7 @@ public class AuthService(
         if (userNameExists)
         {
             _logger.LogWarning("Signup failed: Username '{Username}' is already taken.", request.UserName);
-            return Result.Failure<AuthResponse>(UserErrors.DuplicatedUserName);
+            return Result.Failure<AuthResponseSignUp>(UserErrors.DuplicatedUserName);
         }
         // Map request to ApplicationUser
         var user = request.Adapt<ApplicationUser>();
@@ -84,6 +88,7 @@ public class AuthService(
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
             _logger.LogInformation("User '{Username}' created successfully. Token: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
+            await SendConfirmationEmail(user, code);
             var userRoles = await GetUserRoles(user, cancellationToken);
             var (token, expireIn) = _jwtProvider.GenerateToken(user, userRoles);
             var refreshTokenCode = GenerateRefreshToken();
@@ -94,7 +99,7 @@ public class AuthService(
                 ExpireOn = refreshTokenExpirations
             });
             await _userManager.UpdateAsync(user);
-            var response = new AuthResponse(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
+            var response = new AuthResponseSignUp(user.Id, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response);
         }
 
@@ -103,24 +108,24 @@ public class AuthService(
         _logger.LogError("Signup failed for Email: {Email}, Username: {Username}. Error: {ErrorCode} - {ErrorDescription}",
             request.Email, request.UserName, error.Code, error.Description);
 
-        return Result.Failure<AuthResponse>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+        return Result.Failure<AuthResponseSignUp>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
-    public async Task<Result<AuthResponse>> RegenerateRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponseSignIn>> RegenerateRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Starting to regenerate refresh token for user with access token.");
         // Validate JWT access token
         if (_jwtProvider.ValidateToken(request.AccessToken) is not { } userId)
-            return Result.Failure<AuthResponse>(UserErrors.InvalidJwtToken);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.InvalidJwtToken);
 
         // Fetch user
         if( await _userManager.FindByIdAsync(userId) is not { } user)
-            return Result.Failure<AuthResponse>(UserErrors.UserNotFound);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.UserNotFound);
 
         // Check if the user is disabled or locked
         if (user.IsDisabled)
-            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.UserIsDisabled);
         if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
-            return Result.Failure<AuthResponse>(UserErrors.LockedOut);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.LockedOut);
 
         // Retrieve the active refresh token for the access token
         var userRefreshToken = user.RefreshTokens.SingleOrDefault(rt =>
@@ -129,11 +134,11 @@ public class AuthService(
         );
 
         if (userRefreshToken is null)
-            return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.InvalidRefreshToken);
 
         // Ensure refresh token has not expired
         if (userRefreshToken.IsExpired)
-            return Result.Failure<AuthResponse>(UserErrors.ExpiredRefreshToken);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.ExpiredRefreshToken);
 
         // Revoke the old refresh token
         userRefreshToken.RevokedOn = DateTime.UtcNow;
@@ -156,7 +161,7 @@ public class AuthService(
         await _userManager.UpdateAsync(user);
         _logger.LogInformation("New refresh token generated and user {UserId} updated in the database.", userId);
         // Return response
-        var response = new AuthResponse(user.Id, user.Email, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
+        var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
         _logger.LogInformation("Refresh token regeneration completed successfully for user {UserId}.", userId);
         return Result.Success(response);
     }
@@ -165,17 +170,17 @@ public class AuthService(
         _logger.LogInformation("Starting to revoke refresh token for user with access token.");
         // Validate JWT access token
         if (_jwtProvider.ValidateToken(request.AccessToken) is not { } userId)
-            return Result.Failure<AuthResponse>(UserErrors.InvalidJwtToken);
+            return Result.Failure(UserErrors.InvalidJwtToken);
 
         // Fetch user
         if (await _userManager.FindByIdAsync(userId) is not { } user)
-            return Result.Failure<AuthResponse>(UserErrors.UserNotFound);
+            return Result.Failure(UserErrors.UserNotFound);
 
         // Check if the user is disabled or locked
         if (user.IsDisabled)
-            return Result.Failure<AuthResponse>(UserErrors.UserIsDisabled);
+            return Result.Failure(UserErrors.UserIsDisabled);
         if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
-            return Result.Failure<AuthResponse>(UserErrors.LockedOut);
+            return Result.Failure(UserErrors.LockedOut);
 
         // Retrieve the active refresh token for the access token
         var userRefreshToken = user.RefreshTokens.SingleOrDefault(rt =>
@@ -184,11 +189,11 @@ public class AuthService(
         );
 
         if (userRefreshToken is null)
-            return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
+            return Result.Failure(UserErrors.InvalidRefreshToken);
 
         // Ensure refresh token has not expired
         if (userRefreshToken.IsExpired)
-            return Result.Failure<AuthResponse>(UserErrors.ExpiredRefreshToken);
+            return Result.Failure(UserErrors.ExpiredRefreshToken);
 
         // Revoke the old refresh token
         userRefreshToken.RevokedOn = DateTime.UtcNow;
@@ -229,14 +234,14 @@ public class AuthService(
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
     }
-    public async Task<Result<AuthResponse>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
+    public async Task<Result<AuthResponseSignIn>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
     {
         try
         {
             var payload = await ValidateGoogleTokenAsync(request.GoogleToken);
             if (payload == null)
             {
-                return Result.Failure<AuthResponse>(UserErrors.InvalidCode);
+                return Result.Failure<AuthResponseSignIn>(UserErrors.InvalidCode);
             }
 
             // Find or create user
@@ -248,7 +253,7 @@ public class AuthService(
         catch (Exception ex)
         {
             _logger.LogError(ex, "Google authentication failed");
-            return Result.Failure<AuthResponse>(UserErrors.GoogleAuthFailed);
+            return Result.Failure<AuthResponseSignIn>(UserErrors.GoogleAuthFailed);
         }
     }
     private async Task<ApplicationUser> GetOrCreateGoogleUserAsync(GoogleJsonWebSignature.Payload payload)
@@ -301,7 +306,7 @@ public class AuthService(
     }
     private static string GenerateUsername(string email) =>
       $"{email.Split('@')[0]}{DateTime.UtcNow.Ticks % 1000}";
-    private async Task<Result<AuthResponse>> GenerateAuthResponseAsync(ApplicationUser user)
+    private async Task<Result<AuthResponseSignIn>> GenerateAuthResponseAsync(ApplicationUser user)
     {
         var roles = await _userManager.GetRolesAsync(user);
         var (accessToken, expireIn) = _jwtProvider.GenerateToken(user, roles);
@@ -319,7 +324,7 @@ public class AuthService(
 
         await _userManager.UpdateAsync(user);
 
-        return Result.Success(new AuthResponse(
+        return Result.Success(new AuthResponseSignIn(
             user.Id,
             user.Email,
             user.UserName,
@@ -342,4 +347,20 @@ public class AuthService(
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
     private async Task<IEnumerable<string>> GetUserRoles (ApplicationUser user,CancellationToken cancellationToken = default) =>
         await _userManager.GetRolesAsync(user);
+    private async Task SendConfirmationEmail(ApplicationUser user, string code)
+    {
+        var origin = _httpContextAccessor.HttpContext?.Request.Headers.Origin;
+
+        var emailBody = EmailBodyBuilder.GenerateEmailBody("EmailConfirmation",
+             new Dictionary<string, string>
+             {
+                { "{{userName}}", user.UserName! },
+                    { "{{action_url}}", $"{origin}/auth/checkmail?userId={user.Id}&code={code}" }
+             }
+        );
+        await _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody);
+        //BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody));
+
+        await Task.CompletedTask;
+    }
 }

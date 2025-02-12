@@ -23,6 +23,10 @@ global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.AspNetCore.Mvc.Abstractions;
 global using Microsoft.AspNetCore.OpenApi;
 global using Microsoft.AspNetCore.WebUtilities;
+global using MimeKit;
+global using MailKit.Net.Smtp;
+global using MailKit.Security;
+global using Microsoft.AspNetCore.Identity.UI.Services;
 
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -46,3 +50,5 @@ global using StudyFlow.API.OpenApiTransformer;
 global using StudyFlow.API.Persistences.Context;
 global using StudyFlow.API.Repository.Implementations;
 global using StudyFlow.API.Repository.Interfaces;
+global using StudyFlow.API.Contracts.Roles;
+global using StudyFlow.API.Helpers;

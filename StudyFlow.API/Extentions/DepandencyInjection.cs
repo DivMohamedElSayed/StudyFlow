@@ -11,8 +11,9 @@ public static class DepandencyInjection
         services.AddConnectionConfig(configuration)
             .AddEndpointsApiExplorer()
             .AddIdentityConfig()
-            .AddCorsConfig()
+            .AddCorsConfig(configuration)
             .AddFilterConfig()
+            .AddMailConfig(configuration)
             .AddValidationConfig()
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
@@ -98,19 +99,20 @@ public static class DepandencyInjection
     {
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
+        services.AddScoped<IEmailSender, EmailService>();
         return services;
     }
 
-    private static IServiceCollection AddCorsConfig(this IServiceCollection services) =>
+    private static IServiceCollection AddCorsConfig(this IServiceCollection services,IConfiguration configuration) =>
         services.AddCors(options =>
         {
             options.AddDefaultPolicy(option =>
             {
                 option.AllowAnyHeader();
                 option.AllowAnyMethod();
-                //option.AllowAnyOrigin();
-                option.WithOrigins("http://localhost:3000");
+                option.WithOrigins(configuration.GetSection("AllowedOrigins").Get<string[]>()!);
             });
         });
     private static IServiceCollection AddFilterConfig(this IServiceCollection services)
@@ -124,4 +126,12 @@ public static class DepandencyInjection
         });
         return services;
     }
+    private static IServiceCollection AddMailConfig(this IServiceCollection services,IConfiguration configuration)
+    {
+        // Configure For Mail Setting
+        services.Configure<MailSetting>(configuration.GetSection(nameof(MailSetting)));
+        services.AddHttpContextAccessor();
+        return services;
+    }
+
 }

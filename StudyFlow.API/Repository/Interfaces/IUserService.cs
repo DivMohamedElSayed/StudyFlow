@@ -9,4 +9,7 @@ public interface IUserService
 
     Task<Result> UpdateInfoAsync(string id, UserProfileRequest request);
     Task<Result> ChangePasswordAsync(string id, ChangePasswordRequest request);
+    Task<IEnumerable<UserResponse>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<Result<UserResponse>> GetAsync(string id);
+    Task<Result> CreateAsync(string id,CreateUserRequest request);
 }

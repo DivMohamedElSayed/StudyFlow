@@ -1,0 +1,110 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="x-apple-disable-message-reformatting" />
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
+    <title>Email Confirmation</title>
+    <style type="text/css" rel="stylesheet" media="all">
+        @import url("https://fonts.googleapis.com/css?family=Nunito+Sans:400,700&display=swap");
+
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100% !important;
+            height: 100%;
+            background: #f4f4f7;
+            color: #333;
+            font-family: 'Nunito Sans', sans-serif;
+            -webkit-text-size-adjust: none;
+        }
+
+        a {
+            color: #4c5fd5;
+            text-decoration: none;
+        }
+
+        .button {
+            background: #4c5fd5;
+            border-radius: 6px;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            font-weight: bold;
+            display: inline-block;
+            transition: 0.3s ease;
+            box-shadow: 0 4px 12px rgba(76, 95, 213, 0.3);
+        }
+
+            .button:hover {
+                background: #374fcf;
+                transform: translateY(-2px);
+            }
+
+        .email-wrapper {
+            width: 100%;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .email-content {
+            max-width: 600px;
+            margin: auto;
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+        }
+
+        .email-masthead {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4c5fd5;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            color: #666;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .email-footer {
+            font-size: 14px;
+            color: #999;
+            margin-top: 20px;
+        }
+
+        .sub-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-content">
+            <div class="email-masthead">Study Flow</div>
+            <h1>Hi {{userName}},</h1>
+            <p>Thank you for signing up! To complete your registration, please verify your email address by clicking the button below:</p>
+            <p><a href="{{action_url}}" class="button" target="_blank">Verify Email Address</a></p>
+            <p>If you did not create an account, no further action is required.</p>
+            <p class="sub-text">If you're having trouble clicking the button, copy and paste the following link into your browser:</p>
+            <p class="sub-text">{{action_url}}</p>
+            <div class="email-footer">
+                &copy; 2025 Study Flow. All rights reserved.<br>
+                Maadi Street Rd., Cairo, Egypt
+            </div>
+        </div>
+    </div>
+</body>
+</html>

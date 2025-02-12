@@ -2,11 +2,15 @@
 
 public class UserService(
     UserManager<ApplicationUser> userManager,
-    ILogger<UserService> logger
+    ILogger<UserService> logger,
+    ApplicationDbContext context,
+    IRoleService roleService
     ) : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<UserService> _logger = logger;
+    private readonly ApplicationDbContext _context = context;
+    private readonly IRoleService _roleService = roleService;
 
     public async Task<Result> UpdateThemePreferenceAsync(string id, UserThemeRequest request)
     {
@@ -68,5 +72,63 @@ public class UserService(
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
 
+    }
+    public async Task<IEnumerable<UserResponse>> GetAllAsync(CancellationToken cancellationToken = default) =>
+        await (from user in _context.Users
+               join userRole in _context.UserRoles
+               on user.Id equals userRole.UserId
+               join role in _context.Roles
+               on userRole.RoleId equals role.Id into roles
+               //where !roles.Any(x => x.Name == DefaultRoles.Student)
+               select new
+               {
+                   user.Id,
+                   user.FirstName,
+                   user.LastName,
+                   user.Email,
+                   user.IsDisabled,
+                   Roles = roles.Select(x => x.Name!).ToList()
+               })
+                .GroupBy(u => new { u.Id, u.FirstName, u.LastName, u.Email, u.IsDisabled })
+                .Select(u => new UserResponse(
+                u.Key.Id,
+                u.Key.FirstName,
+                u.Key.LastName,
+                u.Key.Email,
+                u.Key.IsDisabled,
+                u.SelectMany(x => x.Roles)
+                ))
+                .ToListAsync(cancellationToken);
+    public async Task<Result<UserResponse>> GetAsync(string id)
+    {
+        if (await _userManager.FindByIdAsync(id) is not { } user)
+            return Result.Failure<UserResponse>(UserErrors.UserNotFound);
+        var userRoles = await _userManager.GetRolesAsync(user);
+        var response = (user, userRoles).Adapt<UserResponse>();
+        return Result.Success(response);
+    }
+    public async Task<Result> CreateAsync(string id,CreateUserRequest request)
+    {
+        // Validate input
+        if (string.IsNullOrEmpty(request.FirstName) ||
+            string.IsNullOrEmpty(request.LastName) ||
+            string.IsNullOrEmpty(request.PhoneNumber))
+            return Result.Failure(UserErrors.InvalidUserData);
+
+        if (await _userManager.FindByIdAsync(id) is not { } user)
+            return Result.Failure(UserErrors.UserNotFound);
+        user.PhoneNumber = request.PhoneNumber;
+        user.FirstName = request.FirstName;
+        user.LastName = request.LastName;
+        user.PhoneNumberConfirmed = true;
+        // Create user without password (assuming password is optional)
+        var result = await _userManager.UpdateAsync(user);
+
+        if (result.Succeeded)
+            return Result.Success();
+
+        // Handle errors properly
+        var error = result.Errors.First();
+        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
 }

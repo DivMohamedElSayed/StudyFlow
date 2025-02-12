@@ -2,12 +2,12 @@
 
 public interface IAuthService
 {
-    Task<Result<AuthResponse>> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default);
+    Task<Result<AuthResponseSignUp>> SignUpAsync(SignUpRequest request, CancellationToken cancellationToken = default);
 
-    Task<Result<AuthResponse>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default);
-    Task<Result<AuthResponse>> RegenerateRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
+    Task<Result<AuthResponseSignIn>> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default);
+    Task<Result<AuthResponseSignIn>> RegenerateRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
     Task<Result> RevokeRefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
     Task<Result> SendForgetPasswordCodeAsync(ForgetPasswordRequest request);
     Task<Result> ResetPasswordAsync(ResetPasswordRequest request);
-    Task<Result<AuthResponse>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default);
+    Task<Result<AuthResponseSignIn>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default);
 }
