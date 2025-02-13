@@ -1,6 +1,4 @@
-﻿using StudyFlow.API.Errors;
-
-namespace StudyFlow.API.Repository.Implementations;
+﻿namespace StudyFlow.API.Repository.Implementations;
 
 public class AuthService(
         UserManager<ApplicationUser> userManager,
@@ -49,7 +47,7 @@ public class AuthService(
             });
             await _userManager.UpdateAsync(user);
             var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
-            return Result.Success(response);
+            return Result.Success(response,Message.SignInSuccess);
         }
 
         var error = result.IsNotAllowed
@@ -102,7 +100,7 @@ public class AuthService(
             });
             await _userManager.UpdateAsync(user);
             var response = new AuthResponseSignUp(user.Id, token, expireIn, refreshTokenCode, refreshTokenExpirations);
-            return Result.Success(response);
+            return Result.Success(response,Message.SignUpSuccess);
         }
 
         // Log the first error returned from identity
@@ -165,7 +163,7 @@ public class AuthService(
         // Return response
         var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
         _logger.LogInformation("Refresh token regeneration completed successfully for user {UserId}.", userId);
-        return Result.Success(response);
+        return Result.Success(response,Message.TokenRefreshSuccess);
     }
     public async Task<Result> RevokeRefreshTokenAsync(RefreshTokenRequest request,CancellationToken cancellationToken = default)
     {
@@ -206,13 +204,13 @@ public class AuthService(
     public async Task<Result> SendForgetPasswordCodeAsync(ForgetPasswordRequest request)
     {
         if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
-            return Result.Success(); // To the hacker  
+            return Result.Success(""); // To the hacker  
         if(!user.EmailConfirmed)
             return Result.Failure(UserErrors.EmailNotConfirmed);
         var accessToken = await _userManager.GeneratePasswordResetTokenAsync(user);
         accessToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(accessToken));
         _logger.LogInformation("Reset Access Token: {accessToken}",accessToken);
-        // TODO: Send Reset Password Email
+        // TODO: Send Reset Password Email in BackGround Job
         return Result.Success();
     }
     public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request)

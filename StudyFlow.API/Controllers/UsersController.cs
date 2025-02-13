@@ -15,6 +15,6 @@ public class UsersController(IUserService userService) : ControllerBase
     public async Task<IActionResult> Get([FromRoute] string id)
     {
         var result = await _userService.GetAsync(id);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
 }

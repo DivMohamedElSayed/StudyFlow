@@ -24,4 +24,20 @@ public static class ResultExtension
             StatusCode = result.Error.StatusCode
         };
     }
+    public static ObjectResult ToResponse<T>(this Result<T> result)
+    {
+        var statusCode = result.IsSuccess ? StatusCodes.Status200OK : result.Error.StatusCode ?? StatusCodes.Status400BadRequest;
+
+        var response = new ResultResponse<T>
+        {
+            Data = result.IsSuccess ? result.Value : default,
+            Message = result.Message,
+            StatusCode = statusCode,
+            TimeStamp = DateTime.UtcNow
+        };
+
+        return new ObjectResult(response) { StatusCode = statusCode };
+
+    }
+
 }

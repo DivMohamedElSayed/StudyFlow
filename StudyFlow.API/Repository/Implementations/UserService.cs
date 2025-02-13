@@ -3,14 +3,12 @@
 public class UserService(
     UserManager<ApplicationUser> userManager,
     ILogger<UserService> logger,
-    ApplicationDbContext context,
-    IRoleService roleService
+    ApplicationDbContext context
     ) : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<UserService> _logger = logger;
     private readonly ApplicationDbContext _context = context;
-    private readonly IRoleService _roleService = roleService;
 
     public async Task<Result> UpdateThemePreferenceAsync(string id, UserThemeRequest request)
     {
@@ -28,14 +26,6 @@ public class UserService(
         _logger.LogError("Failed to update theme preference for UserId: {UserId}. Error Code: {ErrorCode}, Description: {ErrorMessage}", id, error.Code, error.Description);
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
-    public async Task<Result<UserThemeResponse>> GetThemePreferencesAsync(string id)
-    {
-        _logger.LogInformation("Theme request received for UserId: {UserId}", id);
-        if (await _userManager.FindByIdAsync(id) is not { } user)
-            return Result.Failure<UserThemeResponse>(UserErrors.UserNotFound);
-        return Result.Success(UserThemeResponse.FromUser(user));
-    }
-
     public async Task<Result<UserProfileResponse>> GetInfoAsync(string id)
     {
         _logger.LogInformation("Fetching user profile for user ID: {UserId}", id);
@@ -44,9 +34,8 @@ public class UserService(
             .ProjectToType<UserProfileResponse>()
             .SingleAsync();
         _logger.LogInformation("Successfully fetched user profile for user ID: {UserId}", id);
-        return Result.Success(user);
+        return Result.Success(user,Message.UserProfileSuccess);
     }
-
     public async Task<Result> UpdateInfoAsync(string id, UserProfileRequest request)
     {
         _logger.LogInformation("Updating user profile for user ID: {UserId}", id);
@@ -105,7 +94,7 @@ public class UserService(
             return Result.Failure<UserResponse>(UserErrors.UserNotFound);
         var userRoles = await _userManager.GetRolesAsync(user);
         var response = (user, userRoles).Adapt<UserResponse>();
-        return Result.Success(response);
+        return Result.Success(response,Message.UserSuccess);
     }
     public async Task<Result> CreateAsync(string id,CreateUserRequest request)
     {
@@ -130,5 +119,41 @@ public class UserService(
         // Handle errors properly
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+    }
+    public async Task<Result> CreateAsync(string id, CreateUserRoleRequest request)
+    {
+        _logger.LogInformation("Received role request for user {UserId}: {Roles}", id, string.Join(", ", request.Roles ?? new List<string>()));
+
+        if (await _userManager.FindByIdAsync(id) is not { } user)
+            return Result.Failure(UserErrors.UserNotFound);
+
+        var validRoles = new[] { DefaultRoles.Student, DefaultRoles.Teacher, DefaultRoles.Parent, DefaultRoles.Admin };
+
+        // Ensure roles are valid (case-insensitive check)
+        var invalidRoles = request.Roles!.Where(role => !validRoles.Contains(role, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (invalidRoles.Any())
+        {
+            _logger.LogWarning("User {UserId} attempted to assign invalid roles: {InvalidRoles}", id, string.Join(", ", invalidRoles));
+            return Result.Failure(RoleErrors.InvalidRole);
+        }
+
+        // Remove existing roles
+        var existingRoles = await _userManager.GetRolesAsync(user);
+        if (existingRoles.Any())
+        {
+            await _userManager.RemoveFromRolesAsync(user, existingRoles);
+        }
+
+        // Assign new roles
+        var result = await _userManager.AddToRolesAsync(user, request.Roles!);
+        if (!result.Succeeded)
+        {
+            var error = result.Errors.First();
+            _logger.LogError("Failed to assign roles to user {UserId}. Error: {ErrorCode} - {ErrorDescription}", id, error.Code, error.Description);
+            return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
+        }
+
+        _logger.LogInformation("Successfully assigned roles to user {UserId}: {Roles}", id, string.Join(", ", request.Roles!));
+        return Result.Success();
     }
 }

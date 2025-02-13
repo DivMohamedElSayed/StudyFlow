@@ -13,17 +13,11 @@ public class AccountController(IUserService userService) : ControllerBase
         var result = await _userService.UpdateThemePreferenceAsync(User.GetUserId()!, request);
         return result.IsSuccess ? NoContent() : result.ToProblem();
     }
-    [HttpGet("theme-preference")]
-    public async Task<IActionResult> GetThemePreference()
-    {
-        var result = await _userService.GetThemePreferencesAsync(User.GetUserId()!);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
-    }
     [HttpGet("")]
     public async Task<IActionResult> Info()
     {
         var result = await _userService.GetInfoAsync(User.GetUserId()!);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
 
     [HttpPut("info")]

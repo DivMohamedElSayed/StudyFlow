@@ -11,7 +11,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         _logger.LogInformation("SignUp: Received sign-up request for email: {Email}, username: {Username}", request.Email, request.UserName);
         var result = await _authService.SignUpAsync(request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
 
     [HttpPost("sign-in")]
@@ -19,13 +19,13 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         _logger.LogInformation("SignIn: Received sign-in request for userName: {UserName}", request.UserName);
         var result = await _authService.SignInAsync(request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
     [HttpPost("refresh-token")]
     public async Task<IActionResult> GetRefreshToken([FromBody] RefreshTokenRequest request, CancellationToken cancellationToken)
     {
         var result = await _authService.RegenerateRefreshTokenAsync(request, cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
     [HttpPut("revoke-refresh-token")]
     public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest request,CancellationToken cancellationToken)

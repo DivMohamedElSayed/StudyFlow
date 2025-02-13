@@ -2,7 +2,7 @@
 
 public class Result
 {
-    public Result(bool isSuccess, Error error)
+    public Result(bool isSuccess, Error error,string message)
     {
         if (isSuccess && error != Error.None || !isSuccess && error == Error.None)
         {
@@ -12,22 +12,24 @@ public class Result
         }
         IsSuccess = isSuccess;
         Error = error;
+        Message = message!;
     }
 
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
     public Error Error { get; } = default!;
+    public string Message { get; } = string.Empty;
 
-    public static Result Success() => new(true, Error.None);
+    public static Result Success() => new(true, Error.None,"");
 
-    public static Result Failure(Error error) => new(false, error);
+    public static Result Failure(Error error) => new(false, error,string.Empty);
 
-    public static Result<TValue> Success<TValue>(TValue value) => new(value, true, Error.None);
+    public static Result<TValue> Success<TValue>(TValue value, string message = "Operation successful") => new(value, true, Error.None,message);
 
-    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error);
+    public static Result<TValue> Failure<TValue>(Error error) => new(default, false, error,string.Empty);
 }
 
-public class Result<TValue>(TValue? value, bool isSuccess, Error error) : Result(isSuccess, error)
+public class Result<TValue>(TValue? value, bool isSuccess, Error error, string message) : Result(isSuccess, error,message)
 {
     private TValue? _value = value;
 
