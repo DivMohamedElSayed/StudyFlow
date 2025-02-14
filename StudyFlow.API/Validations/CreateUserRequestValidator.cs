@@ -16,5 +16,11 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
             .Length(3, 100)
             .WithMessage("Last name must be between 3 and 100 characters.");
 
+        RuleFor(p => p.PhoneNumber)
+            .NotEmpty()
+            .Matches(RegexPattern.PhoneNumber)
+            .WithMessage("Invalid phone number. It must start with 010, 011, 012, or 015 and contain exactly 11 digits.");
+
+
     }
 }

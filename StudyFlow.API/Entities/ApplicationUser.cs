@@ -5,6 +5,7 @@ public class ApplicationUser : IdentityUser
     public string? FirstName { get; set; } = string.Empty;
     public string? LastName { get; set; } = string.Empty;
     public bool IsDisabled { get; set; }
+    public DateOnly DateOfBirth { get; set; }
     public string ThemePreference { get; set; } = ThemeConstants.Default;
     // External authentication properties
     public string Provider { get; set; } = AuthProvider.Local;
