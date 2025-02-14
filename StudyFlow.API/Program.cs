@@ -5,8 +5,6 @@ builder.Services.AddDependenciesServices(builder.Configuration);
 builder.Host.UseSerilog((context, configuration) =>
     configuration.ReadFrom.Configuration(context.Configuration)
 );
-var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
-builder.WebHost.UseUrls($"http://*:{port}");
 
 var app = builder.Build();
 
@@ -16,7 +14,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
-app.UseHealthChecks("/health");
+
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();

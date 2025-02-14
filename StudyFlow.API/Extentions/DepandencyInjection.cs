@@ -18,10 +18,8 @@ public static class DepandencyInjection
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
             .AddAuthConfig(configuration);
-        services.AddHealthChecks();
         return services;
     }
-
     private static IServiceCollection AddConnectionConfig(this IServiceCollection services, IConfiguration configuration)
     {
         var connectionString = configuration.GetConnectionString("ConString") ??
