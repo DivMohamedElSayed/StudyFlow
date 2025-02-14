@@ -4,12 +4,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="x-apple-disable-message-reformatting" />
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="supported-color-schemes" content="light dark" />
-    <title>Email Confirmation</title>
+    <meta name="color-scheme" content="dark" />
+    <meta name="supported-color-schemes" content="dark" />
+    <title>Email Confirmation - Study Flow</title>
     <style type="text/css" rel="stylesheet" media="all">
-        @import url("https://fonts.googleapis.com/css?family=Nunito+Sans:400,700&display=swap");
+        @import url("https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap");
 
+        /* Base styles */
         body {
             margin: 0;
             padding: 0;
@@ -17,92 +18,149 @@
             height: 100%;
             background: #1a1a2e;
             color: #ffffff;
-            font-family: 'Nunito Sans', sans-serif;
+            font-family: 'Poppins', sans-serif;
             -webkit-text-size-adjust: none;
         }
 
-        a {
-            color: #4c5fd5;
-            text-decoration: none;
-        }
-
-        .button {
-            background: #4c5fd5;
-            border-radius: 6px;
-            color: #ffffff !important;
-            padding: 12px 24px;
-            text-decoration: none;
-            font-weight: bold;
-            display: inline-block;
-            transition: 0.3s ease;
-            box-shadow: 0 4px 12px rgba(76, 95, 213, 0.3);
-        }
-
-            .button:hover {
-                background: #374fcf;
-                transform: translateY(-2px);
+        /* Responsive container */
+        @media only screen and (max-width: 640px) {
+            .email-content {
+                width: 100% !important;
+                padding: 20px !important;
             }
+        }
 
+        /* Main styles */
         .email-wrapper {
             width: 100%;
-            padding: 40px 0;
+            padding: 40px 20px;
             text-align: center;
+            background: #1a1a2e;
         }
 
         .email-content {
             max-width: 600px;
             margin: auto;
-            background: #2e2e4f;
-            border-radius: 8px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            padding: 40px;
+            background: #252547;
+            border-radius: 16px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+            padding: 48px;
         }
 
         .email-masthead {
-            font-size: 24px;
-            font-weight: bold;
-            color: #4c5fd5;
-            margin-bottom: 20px;
+            margin-bottom: 32px;
         }
 
+        .brand-name {
+            font-size: 28px;
+            font-weight: 600;
+            color: #4c5fd5;
+            letter-spacing: -0.5px;
+        }
+
+        /* Typography */
         h1 {
             color: #ffffff;
             font-size: 24px;
-            margin-bottom: 20px;
+            font-weight: 600;
+            margin: 0 0 24px;
+            letter-spacing: -0.5px;
         }
 
         p {
-            color: #bbbbbb;
+            color: #e0e0e0;
             font-size: 16px;
-            line-height: 1.5;
+            line-height: 1.6;
+            margin: 0 0 24px;
         }
 
+        /* Verification code styles */
+        .verification-code {
+            background: #33334d;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 24px 0;
+            font-family: monospace;
+            font-size: 24px;
+            letter-spacing: 4px;
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        /* Footer styles */
         .email-footer {
-            font-size: 14px;
-            color: #888888;
-            margin-top: 20px;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 1px solid #3c3c5a;
+            text-align: center;
         }
 
-        .sub-text {
-            font-size: 12px;
-            color: #777777;
-            margin-top: 10px;
+        .footer-text {
+            color: #a0a0b0;
+            font-size: 14px;
+            line-height: 1.5;
+            margin: 0 0 8px;
+        }
+
+        .social-links {
+            margin: 24px 0;
+        }
+
+        .social-link {
+            display: inline-block;
+            margin: 0 8px;
+            color: #4c5fd5;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .help-text {
+            font-size: 14px;
+            color: #a0a0b0;
+            margin-top: 24px;
         }
     </style>
 </head>
 <body>
     <div class="email-wrapper">
         <div class="email-content">
-            <div class="email-masthead">Study Flow</div>
-            <h1>Hi {{userName}},</h1>
-            <p>Thank you for signing up! To complete your registration, please verify your email address by clicking the button below:</p>
-            <p><a href="{{action_url}}" class="button" target="_blank">Verify Email Address</a></p>
-            <p>If you did not create an account, no further action is required.</p>
-            <p class="sub-text">If you're having trouble clicking the button, copy and paste the following link into your browser:</p>
-            <p class="sub-text">{{action_url}}</p>
+            <!-- Header -->
+            <div class="email-masthead">
+                <div class="brand-name">Study Flow</div>
+            </div>
+
+            <!-- Main Content -->
+            <h1>Welcome to Study Flow, {{userName}}!</h1>
+            <p>Thank you for joining our community. To ensure the security of your account and access all features, please use the confirmation code below.</p>
+
+            <!-- Verification Code -->
+            <p>Your verification code is:</p>
+            <div class="verification-code">
+                {{verificationCode}}
+            </div>
+
+            <p class="help-text">
+                This code will expire in 10 minutes. If you did not create a Study Flow account, please disregard this email.
+            </p>
+
+            <p class="help-text">
+                The verification code is valid for 10 minutes and will expire after that time.
+            </p>
+
+            <!-- Footer -->
             <div class="email-footer">
-                &copy; 2025 Study Flow. All rights reserved.<br>
-                Maadi Street Rd., Cairo, Egypt
+                <p class="footer-text">
+                    © 2025 Study Flow. All rights reserved.
+                </p>
+                <p class="footer-text">
+                    Study Flow Educational Platform<br>
+                    Maadi Street Rd., Cairo, Egypt
+                </p>
+                <div class="social-links">
+                    <a href="#" class="social-link">Help Center</a>
+                    <a href="#" class="social-link">Terms</a>
+                    <a href="#" class="social-link">Privacy</a>
+                </div>
             </div>
         </div>
     </div>

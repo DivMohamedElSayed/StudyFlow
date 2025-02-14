@@ -6,16 +6,18 @@ public class AuthService(
         SignInManager<ApplicationUser> signInManager,
         IJwtProvider jwtProvider,
         IOptions<GoogleOptions> options,
-        IHttpContextAccessor httpContextAccessor,
-        IEmailSender emailSender
+        IEmailSender emailSender,
+        IVerificationCodeService verificationCode,
+        ApplicationDbContext context
     ) : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<AuthService> _logger = logger;
     private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
     private readonly IJwtProvider _jwtProvider = jwtProvider;
-    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
     private readonly IEmailSender _emailSender = emailSender;
+    private readonly IVerificationCodeService _verificationCode = verificationCode;
+    private readonly ApplicationDbContext _context = context;
     private readonly GoogleOptions _options = options.Value;
     private readonly int _refreshTokenExpiryDay = 30;
 
@@ -83,10 +85,10 @@ public class AuthService(
 
         if (result.Succeeded)
         {
-            // Generate Token
-            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            _logger.LogInformation("User '{Username}' created successfully. Token: {code}", user.UserName, code);
+            // Generate code
+            var code = VerificationCodeGenerator.GenerateCode();
+            await _verificationCode.StoreCodeAsync(user.Email!, code);
+            _logger.LogInformation("User '{Username}' created successfully. code: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
             await SendConfirmationEmail(user, code);
             var userRoles = await GetUserRoles(user, cancellationToken);
@@ -105,8 +107,6 @@ public class AuthService(
 
         // Log the first error returned from identity
         var error = result.Errors.First();
-        _logger.LogError("Signup failed for Email: {Email}, Username: {Username}. Error: {ErrorCode} - {ErrorDescription}",
-            request.Email, request.UserName, error.Code, error.Description);
 
         return Result.Failure<AuthResponseSignUp>(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
@@ -242,30 +242,22 @@ public class AuthService(
         if (user.EmailConfirmed)
             return Result.Failure(UserErrors.DuplicatedConfirmation);
 
-        var code = request.Code;
-
-        try
-        {
-            code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(code));
-        }
-        catch (FormatException)
-        {
+        var storedCode = await _verificationCode.GetStoredCodeAsync(user.Email!);
+        if (storedCode is null || storedCode.Code != request.Code)
             return Result.Failure(UserErrors.InvalidCode);
-        }
-
-        var result = await _userManager.ConfirmEmailAsync(user, code);
-
+        var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        _logger.LogInformation("Token: {token}", token);
+        var result = await _userManager.ConfirmEmailAsync(user, token);
         if (result.Succeeded)
         {
+            await _verificationCode.MarkCodeAsUsedAsync(user.Email!, request.Code);
+            await _context.SaveChangesAsync();
             await _userManager.AddToRoleAsync(user, DefaultRoles.Student);
             return Result.Success();
         }
-
         var error = result.Errors.First();
-
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
-
     public async Task<Result<AuthResponseSignIn>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
     {
         try
@@ -381,18 +373,18 @@ public class AuthService(
         await _userManager.GetRolesAsync(user);
     private async Task SendConfirmationEmail(ApplicationUser user, string code)
     {
-        var origin = _httpContextAccessor.HttpContext?.Request.Headers.Origin;
+
 
         var emailBody = EmailBodyBuilder.GenerateEmailBody("EmailConfirmation",
              new Dictionary<string, string>
              {
                 { "{{userName}}", user.UserName! },
-                    { "{{action_url}}", $"{origin}/auth/verify-email?userId={user.Id}&code={code}" }
+                    { "{{verificationCode}}",code }
              }
         );
         await _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody);
+        await _verificationCode.StoreCodeAsync(user.Email!,code);
         //BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody));
-
         await Task.CompletedTask;
     }
 }

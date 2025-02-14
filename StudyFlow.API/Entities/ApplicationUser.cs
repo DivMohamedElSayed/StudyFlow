@@ -1,6 +1,4 @@
-﻿using StudyFlow.API.Abstractions.Const;
-
-namespace StudyFlow.API.Entities;
+﻿namespace StudyFlow.API.Entities;
 
 public class ApplicationUser : IdentityUser
 {
@@ -13,5 +11,11 @@ public class ApplicationUser : IdentityUser
     public string? ExternalProviderId { get; set; }
     // Helper property to check if user is externally authenticated
     public bool IsExternalUser => Provider != AuthProvider.Local;
+
+
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+    public Student Student { get; set; } = default!;
+    public Teacher Teacher { get; set; } = default!;
+    public Parent Parent { get; set; } = default!;
+    public Guid? ParentId { get; set; }
 }

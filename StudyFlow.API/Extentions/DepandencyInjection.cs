@@ -102,6 +102,7 @@ public static class DepandencyInjection
         services.AddScoped<IRoleService, RoleService>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddScoped<IEmailSender, EmailService>();
+        services.AddScoped<IVerificationCodeService, VerificationCodeService>();
         return services;
     }
 

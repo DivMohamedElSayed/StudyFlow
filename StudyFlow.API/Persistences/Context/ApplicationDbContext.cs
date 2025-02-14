@@ -21,4 +21,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
         // Call the base OnModelCreating method to finalize the model configuration
         base.OnModelCreating(builder);
     }
+    public DbSet<Student> Students => Set<Student>();
+    public DbSet<Parent> Parents => Set<Parent>();
+    public DbSet<Teacher> Teachers => Set<Teacher>();
+    public DbSet<VerificationCode> VerificationCodes => Set<VerificationCode>();
 }

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudyFlow.API.Persistences.Context;
@@ -11,13 +12,15 @@ using StudyFlow.API.Persistences.Context;
 namespace StudyFlow.API.Persistences.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250213120200_CreateStudentTable")]
+    partial class CreateStudentTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.2")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -254,9 +257,6 @@ namespace StudyFlow.API.Persistences.Migrations
                         .HasMaxLength(256)
                         .HasColumnType("character varying(256)");
 
-                    b.Property<Guid?>("ParentId")
-                        .HasColumnType("uuid");
-
                     b.Property<string>("PasswordHash")
                         .HasColumnType("text");
 
@@ -297,8 +297,6 @@ namespace StudyFlow.API.Persistences.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.HasIndex("ParentId");
-
                     b.ToTable("AspNetUsers", (string)null);
 
                     b.HasData(
@@ -323,21 +321,6 @@ namespace StudyFlow.API.Persistences.Migrations
                             TwoFactorEnabled = false,
                             UserName = "admin22studyflow"
                         });
-                });
-
-            modelBuilder.Entity("StudyFlow.API.Entities.Parent", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Parents");
                 });
 
             modelBuilder.Entity("StudyFlow.API.Entities.Student", b =>
@@ -365,57 +348,6 @@ namespace StudyFlow.API.Persistences.Migrations
                         .IsUnique();
 
                     b.ToTable("Students");
-                });
-
-            modelBuilder.Entity("StudyFlow.API.Entities.Teacher", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Subject")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Teachers");
-                });
-
-            modelBuilder.Entity("StudyFlow.API.Entities.VerificationCode", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Code")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTime>("ExpiresAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsUsed")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("VerificationCodes");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -471,10 +403,6 @@ namespace StudyFlow.API.Persistences.Migrations
 
             modelBuilder.Entity("StudyFlow.API.Entities.ApplicationUser", b =>
                 {
-                    b.HasOne("StudyFlow.API.Entities.Parent", "Parent")
-                        .WithMany("ApplicationUsers")
-                        .HasForeignKey("ParentId");
-
                     b.OwnsMany("StudyFlow.API.Entities.RefreshToken", "RefreshTokens", b1 =>
                         {
                             b1.Property<string>("UserId")
@@ -507,8 +435,6 @@ namespace StudyFlow.API.Persistences.Migrations
                                 .HasForeignKey("UserId");
                         });
 
-                    b.Navigation("Parent");
-
                     b.Navigation("RefreshTokens");
                 });
 
@@ -523,29 +449,10 @@ namespace StudyFlow.API.Persistences.Migrations
                     b.Navigation("ApplicationUser");
                 });
 
-            modelBuilder.Entity("StudyFlow.API.Entities.Teacher", b =>
-                {
-                    b.HasOne("StudyFlow.API.Entities.ApplicationUser", "ApplicationUser")
-                        .WithOne("Teacher")
-                        .HasForeignKey("StudyFlow.API.Entities.Teacher", "UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("ApplicationUser");
-                });
-
             modelBuilder.Entity("StudyFlow.API.Entities.ApplicationUser", b =>
                 {
                     b.Navigation("Student")
                         .IsRequired();
-
-                    b.Navigation("Teacher")
-                        .IsRequired();
-                });
-
-            modelBuilder.Entity("StudyFlow.API.Entities.Parent", b =>
-                {
-                    b.Navigation("ApplicationUsers");
                 });
 #pragma warning restore 612, 618
         }

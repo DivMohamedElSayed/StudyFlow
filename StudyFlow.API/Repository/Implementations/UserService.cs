@@ -127,7 +127,7 @@ public class UserService(
         if (await _userManager.FindByIdAsync(id) is not { } user)
             return Result.Failure(UserErrors.UserNotFound);
 
-        var validRoles = new[] { DefaultRoles.Student, DefaultRoles.Teacher, DefaultRoles.Parent, DefaultRoles.Admin };
+        var validRoles = new[] { DefaultRoles.Student, DefaultRoles.Teacher, DefaultRoles.Parent, DefaultRoles.Guest };
 
         // Ensure roles are valid (case-insensitive check)
         var invalidRoles = request.Roles!.Where(role => !validRoles.Contains(role, StringComparer.OrdinalIgnoreCase)).ToList();

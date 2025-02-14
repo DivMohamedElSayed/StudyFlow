@@ -32,5 +32,17 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
             .ToTable("RefreshTokens")
             .WithOwner()
             .HasForeignKey("UserId");
+
+        builder.HasOne(r => r.Student)
+           .WithOne(r => r.ApplicationUser)
+           .HasForeignKey<Student>(fk => fk.UserId);
+
+        builder.HasOne(r => r.Teacher)
+            .WithOne(r => r.ApplicationUser)
+            .HasForeignKey<Teacher>(fk => fk.UserId);
+
+        builder.HasOne(r => r.Parent)
+            .WithMany(r => r.ApplicationUsers)
+            .HasForeignKey(fk => fk.ParentId);
     }
 }
