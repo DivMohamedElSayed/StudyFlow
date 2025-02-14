@@ -16,7 +16,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
     app.MapScalarApiReference();
 }
-
+app.UseHealthChecks("/health");
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();

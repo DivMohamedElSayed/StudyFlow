@@ -18,6 +18,7 @@ public static class DepandencyInjection
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
             .AddAuthConfig(configuration);
+        services.AddHealthChecks();
         return services;
     }
 

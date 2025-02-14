@@ -5,3 +5,4 @@ dockerfilepath = "./StudyFlow.API/Dockerfile"
 [deploy]
 startCommand = "./StudyFlow.API"
 restartPolicyType = "always"
+healthCheckPath = "/health"
