@@ -1,0 +1,7 @@
+﻿[build]
+builder = "dockerfile"
+dockerfilepath = "./StudyFlow.API/Dockerfile"
+
+[deploy]
+startCommand = "./StudyFlow.API"
+restartPolicyType = "always"

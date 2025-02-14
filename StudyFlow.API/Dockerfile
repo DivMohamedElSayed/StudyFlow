@@ -1,27 +1,20 @@
-Use .NET 9 SDK as the base image
-FROM mcr.microsoft.com/dotnet/nightly:9.0 AS build
+# This stage is used to build the service project
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+ARG BUILD_CONFIGURATION=Release
+WORKDIR /src
+COPY ["StudyFlow.API/StudyFlow.API.csproj", "StudyFlow.API/"]
+RUN dotnet restore "./StudyFlow.API/StudyFlow.API.csproj"
+COPY . .
+WORKDIR "/src/StudyFlow.API"
+RUN dotnet build "./StudyFlow.API.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
-Set working directory
+# This stage is used to publish the service project to be copied to the final stage
+FROM build AS publish
+ARG BUILD_CONFIGURATION=Release
+RUN dotnet publish "./StudyFlow.API.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+
+# This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
+FROM base AS final
 WORKDIR /app
-
-Copy project files
-COPY . ./
-
-Restore dependencies
-RUN dotnet restore
-
-Build the application
-RUN dotnet publish -c Release -o /publish
-
-Runtime stage
-FROM mcr.microsoft.com/dotnet/nightly:9.0 AS runtime
-
-WORKDIR /app
-
-COPY --from=build /publish .
-
-Expose the application port
-EXPOSE 8080
-
-Start the application
-CMD ["dotnet", "StudyFlow.API.dll"]
+COPY --from=publish /app/publish .
+ENTRYPOINT ["dotnet", "StudyFlow.API.dll"]
