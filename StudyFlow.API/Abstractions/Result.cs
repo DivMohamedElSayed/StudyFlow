@@ -14,7 +14,6 @@ public class Result
         Error = error;
         Message = message!;
     }
-
     public bool IsSuccess { get; }
     public bool IsFailure => !IsSuccess;
     public Error Error { get; } = default!;

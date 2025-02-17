@@ -3,5 +3,6 @@
 public record CreateUserRequest(
     string FirstName,
     string LastName,
-    string PhoneNumber
+    string PhoneNumber,
+    DateOnly DateOfBirth
 );

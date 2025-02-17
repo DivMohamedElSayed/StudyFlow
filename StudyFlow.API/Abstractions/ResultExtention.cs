@@ -4,24 +4,29 @@ public static class ResultExtension
 {
     public static ObjectResult ToProblem(this Result result)
     {
-        // Check result
         if (result.IsSuccess)
-            throw new InvalidOperationException();
-        // Problem to Show the type of Error
-        var problem = Results.Problem(statusCode: result.Error.Status);
-        // Convert Problem Details
-        var problemDetails = problem.GetType().GetProperty(nameof(ProblemDetails))!.GetValue(problem) as ProblemDetails;// Casting To Problem Details.
-        problemDetails!.Extensions = new Dictionary<string, object?>
+            throw new InvalidOperationException("Cannot convert a successful result to a problem.");
+        if (result.Error is null)
+            throw new InvalidOperationException("Error object cannot be null for a failed result.");
+
+        // Create the error response
+        var errorResponse = new ErrorResponse
         {
+            Data = null,
+            Message = "One or more errors occurred.",
+            Status = result.Error.Status ?? StatusCodes.Status400BadRequest,
+            Errors = new Dictionary<string, List<string>>
             {
-                "errors" , new[]
                 {
                     result.Error.Code,
-                    result.Error.Description
+                    new List<string> { result.Error.Description }
                 }
             }
         };
-        return new ObjectResult(problemDetails);
+        return new ObjectResult(errorResponse)
+        {
+            StatusCode = errorResponse.Status
+        };
     }
     public static ObjectResult ToResponse<T>(this Result<T> result)
     {
@@ -35,6 +40,5 @@ public static class ResultExtension
         };
 
         return new ObjectResult(response) { StatusCode = statusCode };
-
     }
 }

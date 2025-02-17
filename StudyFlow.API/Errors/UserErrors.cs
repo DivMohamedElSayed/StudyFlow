@@ -1,6 +1,4 @@
-﻿using System.Security.Cryptography.Xml;
-
-namespace StudyFlow.API.Errors;
+﻿namespace StudyFlow.API.Errors;
 
 public static class UserErrors
 {
@@ -44,5 +42,7 @@ public static class UserErrors
         new("user.InvalidUserData", "First name and last name are required", StatusCodes.Status400BadRequest);
     public static readonly Error DuplicatedConfirmation =
     new("user.ConfirmationDuplicated", "The confirmation request has already been processed.", StatusCodes.Status409Conflict);
+    public static readonly Error DuplicatedUser =
+     new("user.DuplicatedUser", "The provided user information already exists in the system. Please use a unique email or username.", StatusCodes.Status409Conflict);
 
 }

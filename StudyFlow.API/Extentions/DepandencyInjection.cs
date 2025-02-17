@@ -18,6 +18,9 @@ public static class DepandencyInjection
             .AddMapsterConfig()
             .AddRegistrationServicesConfig()
             .AddAuthConfig(configuration);
+        services.Configure<ApiBehaviorOptions>(option =>
+            option.SuppressModelStateInvalidFilter = true
+        );
         return services;
     }
     private static IServiceCollection AddConnectionConfig(this IServiceCollection services, IConfiguration configuration)
@@ -99,6 +102,7 @@ public static class DepandencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IRoleService, RoleService>();
+        services.AddScoped<IStudentService, StudentService>();
         services.AddSingleton<IJwtProvider, JwtProvider>();
         services.AddScoped<IEmailSender, EmailService>();
         services.AddScoped<IVerificationCodeService, VerificationCodeService>();

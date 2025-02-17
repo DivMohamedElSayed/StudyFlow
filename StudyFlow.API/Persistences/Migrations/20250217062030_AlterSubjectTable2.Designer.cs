@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StudyFlow.API.Persistences.Context;
@@ -11,9 +12,11 @@ using StudyFlow.API.Persistences.Context;
 namespace StudyFlow.API.Persistences.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250217062030_AlterSubjectTable2")]
+    partial class AlterSubjectTable2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -360,10 +363,6 @@ namespace StudyFlow.API.Persistences.Migrations
                         .IsRequired()
                         .HasMaxLength(12)
                         .HasColumnType("character varying(12)");
-
-                    b.Property<string>("PreferredSubjects")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("SchoolName")
                         .IsRequired()

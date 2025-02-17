@@ -18,9 +18,16 @@ public class CreateUserRequestValidator : AbstractValidator<CreateUserRequest>
 
         RuleFor(p => p.PhoneNumber)
             .NotEmpty()
-            .Matches(RegexPattern.PhoneNumber)
+            .WithMessage("Phone number is required.")
             .WithMessage("Invalid phone number. It must start with 010, 011, 012, or 015 and contain exactly 11 digits.");
 
-
+        RuleFor(d => d.DateOfBirth)
+            .NotEmpty()
+            .WithMessage("Date of Birth is required.")
+            .Must(BeAtLeast6YearsOld)
+            .WithMessage("The person must be at least 6 years old.");
     }
+    private static bool BeAtLeast6YearsOld(DateOnly dateOfBirth) =>
+    dateOfBirth <= DateOnly.FromDateTime(DateTime.UtcNow.AddYears(-6));
+
 }

@@ -110,6 +110,7 @@ public class UserService(
         user.FirstName = request.FirstName;
         user.LastName = request.LastName;
         user.PhoneNumberConfirmed = true;
+        user.DateOfBirth = request.DateOfBirth;
         // Create user without password (assuming password is optional)
         var result = await _userManager.UpdateAsync(user);
 

@@ -42,6 +42,8 @@ global using StudyFlow.API.Abstractions;
 global using StudyFlow.API.Abstractions.Const;
 global using StudyFlow.API.Contracts.Authentications;
 global using StudyFlow.API.Contracts.Users;
+global using StudyFlow.API.Contracts.Students;
+
 global using StudyFlow.API.Entities;
 global using StudyFlow.API.Errors;
 global using StudyFlow.API.Extentions;

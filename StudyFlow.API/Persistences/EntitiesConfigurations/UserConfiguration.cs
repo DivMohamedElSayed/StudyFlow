@@ -6,6 +6,8 @@ public class UserConfiguration : IEntityTypeConfiguration<ApplicationUser>
     {
         builder.Property(f => f.FirstName)
             .HasMaxLength(100);
+        builder.Property(p => p.PhoneNumber)
+            .HasMaxLength(12);
         builder.Property(l => l.LastName)
             .HasMaxLength(100);
         builder.Property(t => t.ThemePreference)
