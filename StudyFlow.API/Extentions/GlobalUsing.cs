@@ -5,6 +5,10 @@ global using System.Security.Claims;
 global using System.Text;
 global using System.Text.Json;
 global using System.Security.Cryptography;
+global using Microsoft.Extensions.Diagnostics.HealthChecks;
+global using StudyFlow.API.Health;
+global using HealthChecks.UI.Client;
+global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 
 global using FluentValidation;
 global using FluentValidation.AspNetCore;

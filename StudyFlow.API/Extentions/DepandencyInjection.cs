@@ -21,6 +21,9 @@ public static class DepandencyInjection
         services.Configure<ApiBehaviorOptions>(option =>
             option.SuppressModelStateInvalidFilter = true
         );
+        services.AddHealthChecks()
+            .AddNpgSql(connectionString: configuration.GetConnectionString("ConString")!, name: "database")
+            .AddCheck<MailProviderHealthCheck>(name: "mail service", tags: ["api"]);
         return services;
     }
     private static IServiceCollection AddConnectionConfig(this IServiceCollection services, IConfiguration configuration)

@@ -8,7 +8,7 @@ public class RolesController(IRoleService roleService) : ControllerBase
     public async Task<IActionResult> Get(string id)
     {
         var result =  await _roleService.GetAsync(id);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
     [HttpGet("")]
     public async Task<IActionResult> GetAll([FromQuery] bool includeDisabled, CancellationToken cancellationToken)

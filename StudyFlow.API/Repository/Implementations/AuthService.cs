@@ -48,7 +48,7 @@ public class AuthService(
                 ExpireOn = refreshTokenExpirations
             });
             await _userManager.UpdateAsync(user);
-            var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
+            var response = new AuthResponseSignIn(user.Id,user.FirstName!,user.LastName!,user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response,Message.SignInSuccess);
         }
 
@@ -161,7 +161,7 @@ public class AuthService(
         await _userManager.UpdateAsync(user);
         _logger.LogInformation("New refresh token generated and user {UserId} updated in the database.", userId);
         // Return response
-        var response = new AuthResponseSignIn(user.Id, user.Email, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
+        var response = new AuthResponseSignIn(user.Id, user.Email!,user.FirstName!,user.LastName!, user.UserName, newAccessToken, newExpireIn, newRefreshToken, newRefreshTokenExpiration);
         _logger.LogInformation("Refresh token regeneration completed successfully for user {UserId}.", userId);
         return Result.Success(response,Message.TokenRefreshSuccess);
     }
@@ -350,6 +350,8 @@ public class AuthService(
 
         return Result.Success(new AuthResponseSignIn(
             user.Id,
+            user.FirstName!,
+            user.LastName!,
             user.Email,
             user.UserName,
             accessToken,

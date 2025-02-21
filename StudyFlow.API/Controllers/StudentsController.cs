@@ -11,4 +11,10 @@ public class StudentsController(IStudentService studentService) : ControllerBase
         var result = await _studentService.CreateAsync(User.GetUserId()!, request, cancellationToken);
         return result.IsSuccess ? Created() : result.ToProblem();
     }
+    [HttpGet("{id}")]
+    public async Task<IActionResult> Get([FromRoute] string id , CancellationToken cancellationToken)
+    {
+        var result = await _studentService.GetAsync(User.GetUserId()!,id, cancellationToken);
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
+    }
 }

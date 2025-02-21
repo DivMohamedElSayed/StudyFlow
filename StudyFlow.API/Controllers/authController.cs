@@ -50,7 +50,7 @@ public class AuthController(IAuthService authService, ILogger<AuthController> lo
     {
         _logger.LogInformation("Received Google sign-in request");
         var result = await _authService.GoogleSignInAsync(request,cancellationToken);
-        return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
+        return result.IsSuccess ? result.ToResponse() : result.ToProblem();
     }
     [HttpPost("verify-email")]
     public async Task<IActionResult> ConfirmEmail([FromBody] ConfirmEmailRequest request)

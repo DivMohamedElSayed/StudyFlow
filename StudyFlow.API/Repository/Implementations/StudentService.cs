@@ -37,4 +37,22 @@ public class StudentService(
         _logger.LogInformation("Student created successfully. UserId: {UserId}, StudentId: {StudentId}", userId, student.Id);
         return Result.Success();
     }
+    public async Task<Result<StudentResponse>> GetAsync(string userId,string id ,CancellationToken cancellationToken = default)
+    {
+        var result = await _context.Users
+            .AsNoTracking()
+            .Include(x => x.Student)
+            .Where(x=>x.Id == userId)
+            .Select(u => new StudentResponse(
+                u.FirstName!,
+                u.LastName!,
+                u.UserName!,
+                u.PhoneNumber!,
+                u.Student.GradeLevel,
+                u.Student.SchoolName,
+                u.Student.PreferredSubjects.ToList()
+            ))
+            .SingleOrDefaultAsync(cancellationToken);
+        return Result.Success(result!);
+    }
 }

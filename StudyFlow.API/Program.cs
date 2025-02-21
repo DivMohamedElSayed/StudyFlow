@@ -20,6 +20,10 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.UseCors();
+app.MapHealthChecks("health",new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
 
 app.UseRejectExtraFields();
 
