@@ -16,6 +16,7 @@ public static class DepandencyInjection
             .AddMailConfig(configuration)
             .AddValidationConfig()
             .AddMapsterConfig()
+            .AddBackgroundConfig(configuration)
             .AddRegistrationServicesConfig()
             .AddAuthConfig(configuration);
         services.Configure<ApiBehaviorOptions>(option =>
@@ -140,5 +141,16 @@ public static class DepandencyInjection
         services.AddHttpContextAccessor();
         return services;
     }
+    private static IServiceCollection AddBackgroundConfig(this IServiceCollection services,IConfiguration configuration)
+    {
+        services.AddHangfire(config => config
+        .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+        .UseSimpleAssemblyNameTypeSerializer()
+        .UseRecommendedSerializerSettings()
+        .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(configuration.GetConnectionString("HangfireConnection"))));
 
+        services.AddHangfireServer();
+
+        return services;
+    }
 }

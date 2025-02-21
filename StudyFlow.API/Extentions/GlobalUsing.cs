@@ -9,6 +9,8 @@ global using Microsoft.Extensions.Diagnostics.HealthChecks;
 global using StudyFlow.API.Health;
 global using HealthChecks.UI.Client;
 global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+global using Hangfire;
+global using Hangfire.PostgreSql;
 
 global using FluentValidation;
 global using FluentValidation.AspNetCore;

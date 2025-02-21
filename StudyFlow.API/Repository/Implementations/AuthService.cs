@@ -375,8 +375,6 @@ public class AuthService(
         await _userManager.GetRolesAsync(user);
     private async Task SendConfirmationEmail(ApplicationUser user, string code)
     {
-
-
         var emailBody = EmailBodyBuilder.GenerateEmailBody("EmailConfirmation",
              new Dictionary<string, string>
              {
@@ -384,9 +382,8 @@ public class AuthService(
                     { "{{verificationCode}}",code }
              }
         );
-        await _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody);
+        BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody));
         await _verificationCode.StoreCodeAsync(user.Email!,code);
-        //BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody));
         await Task.CompletedTask;
     }
 }

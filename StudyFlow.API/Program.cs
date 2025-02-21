@@ -1,3 +1,5 @@
+using HangfireBasicAuthenticationFilter;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDependenciesServices(builder.Configuration);
@@ -18,6 +20,19 @@ if (app.Environment.IsDevelopment())
 app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
+
+app.UseHangfireDashboard("/Jobs",new DashboardOptions
+{
+    Authorization = 
+    [
+       new  HangfireCustomBasicAuthenticationFilter
+       {
+           User = app.Configuration.GetValue<string>("HangfireSettings:UserName"),
+           Pass = app.Configuration.GetValue<string>("HangfireSettings:Password")
+       }
+    ],
+    DashboardTitle = "Study Flow Dashboard"
+});
 
 app.UseCors();
 app.MapHealthChecks("health",new HealthCheckOptions
