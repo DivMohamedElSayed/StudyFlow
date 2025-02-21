@@ -11,6 +11,7 @@ global using HealthChecks.UI.Client;
 global using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 global using Hangfire;
 global using Hangfire.PostgreSql;
+global using HangfireBasicAuthenticationFilter;
 
 global using FluentValidation;
 global using FluentValidation.AspNetCore;

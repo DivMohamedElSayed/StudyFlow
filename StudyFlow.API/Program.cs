@@ -1,5 +1,3 @@
-using HangfireBasicAuthenticationFilter;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDependenciesServices(builder.Configuration);
@@ -23,7 +21,7 @@ app.UseHttpsRedirection();
 
 app.UseHangfireDashboard("/Jobs",new DashboardOptions
 {
-    Authorization = 
+    Authorization =
     [
        new  HangfireCustomBasicAuthenticationFilter
        {
