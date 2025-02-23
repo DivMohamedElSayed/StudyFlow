@@ -1,4 +1,6 @@
-﻿namespace StudyFlow.API.Repository.Implementations;
+﻿using StudyFlow.API.Abstractions;
+
+namespace StudyFlow.API.Repository.Implementations;
 
 public class AuthService(
         UserManager<ApplicationUser> userManager,
@@ -204,36 +206,45 @@ public class AuthService(
     public async Task<Result> SendForgetPasswordCodeAsync(ForgetPasswordRequest request)
     {
         if (await _userManager.FindByEmailAsync(request.Email) is not { } user)
-            return Result.Success(""); // To the hacker  
+            return Result.Success();
         if(!user.EmailConfirmed)
             return Result.Failure(UserErrors.EmailNotConfirmed);
-        var accessToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-        accessToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(accessToken));
-        _logger.LogInformation("Reset Access Token: {accessToken}",accessToken);
-        // TODO: Send Reset Password Email in BackGround Job
+        var code = VerificationCodeGenerator.GenerateCode();
+        var verifyCode = new VerificationCode
+        {
+            Code = code
+        };
+        await _verificationCode.StoreCodeAsync(user.Email!, code);
+        await SendResetPasswordEmail(user, code);
         return Result.Success();
     }
     public async Task<Result> ResetPasswordAsync(ResetPasswordRequest request)
     {
+        // TODO :: Fix that 
         var user = await _userManager.FindByEmailAsync(request.Email);
-        if (user is null || !user.EmailConfirmed)
-            return Result.Failure(UserErrors.InvalidCode);
-        IdentityResult result;
+        if (!user!.EmailConfirmed)
+            return Result.Failure(UserErrors.DuplicatedConfirmation);
+        if(user is null)
+            return Result.Failure(UserErrors.UserNotFound);
         try
         {
-            var accessToken = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(request.AccessToken));
-            result = await _userManager.ResetPasswordAsync(user, accessToken, request.NewPassword);
+            var token = await _verificationCode.GetStoredCodeAsync(request.Email);
+            if (string.IsNullOrWhiteSpace(token?.Code) || token.Code.Trim() != request.code.Trim())
+                return Result.Failure(UserErrors.InvalidCode);
+            var result = await _userManager.ResetPasswordAsync(user, token.Code, request.NewPassword);
+
+            if (result.Succeeded)
+                return Result.Success();
+
+            var error = result.Errors.First();
+            return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
         }
         catch (FormatException)
         {
-            result = IdentityResult.Failed(_userManager.ErrorDescriber.InvalidToken());
+            return Result.Failure(UserErrors.InvalidCode);
         }
-
-        if(result.Succeeded)
-            return Result.Success();
-        var error = result.Errors.First();
-        return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status401Unauthorized));
     }
+
     public async Task<Result> ConfirmEmailAsync(ConfirmEmailRequest request)
     {
         if (await _userManager.FindByIdAsync(request.UserId) is not { } user)
@@ -258,6 +269,33 @@ public class AuthService(
         var error = result.Errors.First();
         return Result.Failure(new Error(error.Code, error.Description, StatusCodes.Status400BadRequest));
     }
+    public async Task<Result> ResendConfirmationEmailAsync(ResendConfirmationEmailRequest request)
+    {
+        if (await _userManager.FindByNameAsync(request.UserName) is not { } user)
+            return Result.Failure(UserErrors.UserNotFound); // Handle user not found scenario
+
+        if (user.EmailConfirmed)
+            return Result.Failure(UserErrors.DuplicatedConfirmation);
+
+        // Generate a new email confirmation token
+        var code = VerificationCodeGenerator.GenerateCode();
+        var verifyCode = new VerificationCode
+        {
+            Code = code
+        };
+        await _userManager.ConfirmEmailAsync(user,code);
+
+        await _userManager.UpdateAsync(user);
+
+        // Log the code for debugging purposes
+        _logger.LogInformation("Resend Confirmation code: {code}", code);
+
+        // Send the confirmation email to the user with the generated token
+        await SendConfirmationEmail(user, code);
+
+        return Result.Success();
+    }
+
     public async Task<Result<AuthResponseSignIn>> GoogleSignInAsync(GoogleSignInRequest request, CancellationToken cancellationToken = default)
     {
         try
@@ -384,6 +422,19 @@ public class AuthService(
         );
         BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Email Confirmation", emailBody));
         await _verificationCode.StoreCodeAsync(user.Email!,code);
+        await Task.CompletedTask;
+    }
+    private async Task SendResetPasswordEmail(ApplicationUser user, string code)
+    {
+        var emailBody = EmailBodyBuilder.GenerateEmailBody("ForgetPassword",
+             new Dictionary<string, string>
+             {
+                { "{{userName}}", user.UserName! },
+                    { "{{verificationCode}}",code }
+             }
+        );
+        BackgroundJob.Enqueue(() => _emailSender.SendEmailAsync(user.Email!, "✅ Study Flow : Change Password", emailBody));
+        await _verificationCode.StoreCodeAsync(user.Email!, code);
         await Task.CompletedTask;
     }
 }

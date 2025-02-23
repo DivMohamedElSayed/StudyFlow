@@ -1,12 +1,9 @@
-﻿
-namespace StudyFlow.API.Repository.Implementations;
+﻿namespace StudyFlow.API.Repository.Implementations;
 
 public class EmailService(IOptions<MailSetting> options, ILogger<EmailService> logger) : IEmailSender
 {
     private readonly MailSetting _options = options.Value;
     private readonly ILogger<EmailService> _logger = logger;
-
-
 
     public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {

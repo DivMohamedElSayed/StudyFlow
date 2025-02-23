@@ -16,7 +16,7 @@ public class ResetPasswordRequestValidator : AbstractValidator<ResetPasswordRequ
             .Matches(RegexPattern.Password)
             .WithMessage("Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.");
 
-        RuleFor(a => a.AccessToken)
+        RuleFor(c => c.code)
             .NotEmpty()
             .WithMessage("Access Token is required.");
     }

@@ -1,7 +1,7 @@
 ﻿namespace StudyFlow.API.Contracts.Authentications;
 
 public record ResetPasswordRequest(
-    string AccessToken,
+    string code,
     string Email,
     string NewPassword
 );

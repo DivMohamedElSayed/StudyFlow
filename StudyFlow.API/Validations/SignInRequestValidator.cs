@@ -11,7 +11,7 @@ public class SignInRequestValidator : AbstractValidator<SignInRequest>
             .WithMessage("Username must be 3-20 characters long.")
             .Matches(RegexPattern.UserName)
             .WithMessage("Username can only contain lowercase letters, numbers, and underscores.")
-            .Must(username => !username.Contains("#"))
+            .Must(username => !username.Contains('#'))
             .WithMessage("Username cannot contain the '#' character.");
 
         RuleFor(p => p.Password)
