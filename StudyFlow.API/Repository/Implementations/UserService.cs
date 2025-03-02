@@ -3,12 +3,14 @@
 public class UserService(
     UserManager<ApplicationUser> userManager,
     ILogger<UserService> logger,
-    ApplicationDbContext context
+    ApplicationDbContext context,
+    SignInManager<ApplicationUser> signInManager
     ) : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager = userManager;
     private readonly ILogger<UserService> _logger = logger;
     private readonly ApplicationDbContext _context = context;
+    private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
 
     public async Task<Result> UpdateThemePreferenceAsync(string id, UserThemeRequest request)
     {

@@ -1,6 +1,4 @@
-﻿using StudyFlow.API.Abstractions;
-
-namespace StudyFlow.API.Repository.Implementations;
+﻿namespace StudyFlow.API.Repository.Implementations;
 
 public class AuthService(
         UserManager<ApplicationUser> userManager,
@@ -40,7 +38,7 @@ public class AuthService(
         if (result.Succeeded)
         {
             _logger.LogInformation("Sign-in succeeded for user: {Username}", request.UserName);
-            var userRoles = await GetUserRoles(user,cancellationToken);
+            var userRoles = await GetUserRoles(user);
             var (token, expireIn) = _jwtProvider.GenerateToken(user,userRoles);
             var refreshTokenCode = GenerateRefreshToken();
             var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
@@ -53,7 +51,6 @@ public class AuthService(
             var response = new AuthResponseSignIn(user.Id,user.FirstName!,user.LastName!,user.Email, user.UserName, token, expireIn, refreshTokenCode, refreshTokenExpirations);
             return Result.Success(response,Message.SignInSuccess);
         }
-
         var error = result.IsNotAllowed
             ? UserErrors.EmailNotConfirmed
             : result.IsLockedOut
@@ -93,7 +90,7 @@ public class AuthService(
             _logger.LogInformation("User '{Username}' created successfully. code: {code}", user.UserName, code);
             // TODO: Implement email sending logic here
             await SendConfirmationEmail(user, code);
-            var userRoles = await GetUserRoles(user, cancellationToken);
+            var userRoles = await GetUserRoles(user);
             var (token, expireIn) = _jwtProvider.GenerateToken(user, userRoles);
             var refreshTokenCode = GenerateRefreshToken();
             var refreshTokenExpirations = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
@@ -147,7 +144,7 @@ public class AuthService(
         _logger.LogInformation("Refresh token revoked for user {UserId}.", userId);
 
         // Generate new tokens
-        var userRoles = await GetUserRoles(user, cancellationToken);
+        var userRoles = await GetUserRoles(user);
         var (newAccessToken, newExpireIn) = _jwtProvider.GenerateToken(user, userRoles);
         var newRefreshToken = GenerateRefreshToken();
         var newRefreshTokenExpiration = DateTime.UtcNow.AddDays(_refreshTokenExpiryDay);
@@ -409,7 +406,7 @@ public class AuthService(
 
     private static string GenerateRefreshToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-    private async Task<IEnumerable<string>> GetUserRoles (ApplicationUser user,CancellationToken cancellationToken = default) =>
+    private async Task<IEnumerable<string>> GetUserRoles(ApplicationUser user) =>
         await _userManager.GetRolesAsync(user);
     private async Task SendConfirmationEmail(ApplicationUser user, string code)
     {
